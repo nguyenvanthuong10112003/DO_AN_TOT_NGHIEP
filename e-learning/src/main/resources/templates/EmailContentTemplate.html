@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2d89ef;
+            letter-spacing: 4px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Xin chào <strong style="font-weight: 700">[[${name}]]</strong>,</h2>
+
+    <div th:utext="${body}"></div>
+
+    <p>Vui lòng không cung cấp thông tin cho bất kỳ ai, <br/> xin cảm ơn!</p>
+
+    <div class="footer">
+        © [[${year}]] [[${appName}]]
+    </div>
+</div>
+</body>
+</html>

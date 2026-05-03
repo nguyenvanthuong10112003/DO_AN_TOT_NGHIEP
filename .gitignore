@@ -1,0 +1,7 @@
+./google-oauth2.json
+./e-learning/target
+./e-learning/src/main/resources
+./e-learning-web/node_modules
+./e-learning-web/.env
+./media-service/target
+./media-service/src/main/resources
