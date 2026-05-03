@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+
+.cert-outer {
+    padding: 32px;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cert-wrapper {
+    width: 1280px;
+    background: #fdfaf4;
+    border: 2px solid #c9a84c;
+    position: relative;
+    overflow: hidden;
+}
+
+.cert-border-inner {
+    position: absolute;
+    inset: 8px;
+    border: 1px solid #e8c97a;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.cert-corner {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    z-index: 2;
+}
+
+.cert-corner svg {
+    width: 64px;
+    height: 64px;
+}
+
+.cc-tl {
+    top: 4px;
+    left: 4px;
+}
+
+.cc-tr {
+    top: 4px;
+    right: 4px;
+    transform: scaleX(-1);
+}
+
+.cc-bl {
+    bottom: 4px;
+    left: 4px;
+    transform: scaleY(-1);
+}
+
+.cc-br {
+    bottom: 4px;
+    right: 4px;
+    transform: scale(-1, -1);
+}
+
+.cert-body {
+    position: relative;
+    z-index: 3;
+    padding: 48px 72px 40px;
+    text-align: center;
+}
+
+.cert-logo-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 6px;
+}
+
+.cert-logo-emblem {
+    width: 54px;
+    height: 54px;
+}
+
+.cert-org {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #8a6a10;
+}
+
+.cert-divider-gold {
+    width: 240px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c9a84c 30%, #c9a84c 70%, transparent);
+    margin: 14px auto 12px;
+}
+
+.cert-title-main {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: #2c1f00;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.cert-title-sub {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #b08930;
+    margin-bottom: 20px;
+}
+
+.cert-presented {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 14px;
+    font-style: italic;
+    color: #7a6030;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.cert-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 42px;
+    font-style: italic;
+    font-weight: 400;
+    color: #1a1200;
+    line-height: 1.15;
+    margin-bottom: 4px;
+    position: relative;
+    display: inline-block;
+}
+
+.cert-name::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, #c9a84c 25%, #e8c97a 50%, #c9a84c 75%, transparent);
+    margin-top: 6px;
+}
+
+.cert-completed-text {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 14px;
+    font-style: italic;
+    color: #7a6030;
+    letter-spacing: 0.05em;
+    margin: 16px 0 6px;
+}
+
+.cert-course-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c1f00;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    padding: 0 24px;
+    line-height: 1.3;
+}
+
+.cert-divider-thin {
+    width: 180px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c9a84c 30%, #c9a84c 70%, transparent);
+    margin: 20px auto 24px;
+}
+
+.cert-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 8px;
+    padding: 0 16px;
+}
+
+.cert-sig-block {
+    text-align: center;
+    flex: 1;
+}
+
+.cert-sig-line {
+    width: 150px;
+    height: 1px;
+    background: #b08930;
+    margin: 0 auto 6px;
+}
+
+.cert-sig-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8a6a10;
+}
+
+.cert-sig-name-label {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 13px;
+    color: #5a4a20;
+    font-style: italic;
+    margin-bottom: 2px;
+}
+
+.cert-seal {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    flex-shrink: 0;
+    position: relative;
+    top: 4px;
+}
+
+.cert-date-block {
+    text-align: center;
+    flex: 1;
+}
+
+.cert-date-label {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8a6a10;
+    margin-bottom: 4px;
+}
+
+.cert-date-val {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2c1f00;
+    letter-spacing: 0.04em;
+}
+
+.cert-bg-watermark {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cert-wrapper {
+        background: #1c1500;
+        border-color: #c9a84c;
+    }
+
+    .cert-border-inner {
+        border-color: #7a5c18;
+    }
+
+    .cert-title-main {
+        color: #f5e9c0;
+    }
+
+    .cert-course-name {
+        color: #f5e9c0;
+    }
+
+    .cert-name {
+        color: #f5e9c0;
+    }
+
+    .cert-name::after {
+        background: linear-gradient(90deg, transparent, #c9a84c 25%, #e8c97a 50%, #c9a84c 75%, transparent);
+    }
+
+    .cert-presented,
+    .cert-completed-text {
+        color: #c9a84c;
+    }
+
+    .cert-sig-name-label {
+        color: #c9a84c;
+    }
+
+    .cert-date-val {
+        color: #f5e9c0;
+    }
+
+    .cert-bg-watermark {
+        opacity: 0.06;
+    }
+}

@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+
+.c2-wrap {
+    background: #0d1b2a;
+    padding: 52px 64px;
+    font-family: "Noto Sans", Arial, sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.c2-accent-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background: #00d4aa;
+}
+
+.c2-accent-bar2 {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #00d4aa;
+    opacity: .3;
+}
+
+.c2-top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 48px;
+}
+
+.c2-badge {
+    width: 56px;
+    height: 56px;
+    border: 2px solid #00d4aa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.c2-badge svg {
+    width: 28px;
+    height: 28px;
+}
+
+.c2-org-text {
+    text-align: right;
+}
+
+.c2-org-name {
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #00d4aa;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.c2-org-sub {
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #4a6882;
+    font-weight: 400;
+}
+
+.c2-cert-label {
+    font-size: 10px;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: #00d4aa;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.c2-main-title {
+    font-family: "Noto Sans",  "Times New Roman", sans-serif;
+    font-size: 52px;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.c2-main-title em {
+    font-style: italic;
+    color: #00d4aa;
+}
+
+.c2-divider {
+    width: 64px;
+    height: 2px;
+    background: #00d4aa;
+    margin: 20px 0;
+}
+
+.c2-presented {
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #4a6882;
+    margin-bottom: 8px;
+}
+
+.c2-name {
+    font-family: "Noto Sans",  "Times New Roman", sans-serif;
+    font-size: 40px;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.c2-course-row {
+    margin-top: 20px;
+    padding: 20px 24px;
+    border: 1px solid #1e3448;
+    display: inline-block;
+    min-width: 340px;
+}
+
+.c2-course-lbl {
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #4a6882;
+    margin-bottom: 6px;
+}
+
+.c2-course-val {
+    font-family: "Noto Sans",  "Times New Roman", sans-serif;
+    font-size: 20px;
+    color: #fff;
+}
+
+.c2-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #1e3448;
+}
+
+.c2-sig-group {
+    text-align: left;
+}
+
+.c2-sig-name {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.c2-sig-role {
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #4a6882;
+}
+
+.c2-date-group {
+    text-align: right;
+}
+
+.c2-date-lbl {
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #4a6882;
+    margin-bottom: 4px;
+}
+
+.c2-date-val {
+    font-size: 14px;
+    color: #00d4aa;
+    font-weight: 500;
+}
+
+.c2-id {
+    font-size: 10px;
+    color: #1e3448;
+    letter-spacing: .1em;
+    margin-top: 4px;
+}
+
+.c2-bg-geo {
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: .04;
+}

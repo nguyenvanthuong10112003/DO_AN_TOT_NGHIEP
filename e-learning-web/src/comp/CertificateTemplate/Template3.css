@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Nunito:wght@300;400;600&display=swap');
+
+.c3-outer {
+    background: #fdf6fa;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.c3-top-band {
+    background: #e8d5f0;
+    height: 10px;
+}
+
+.c3-bottom-band {
+    background: #e8d5f0;
+    height: 10px;
+}
+
+.c3-body {
+    padding: 44px 60px 36px;
+    position: relative;
+}
+
+.c3-circles-bg {
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    opacity: .12;
+}
+
+.c3-circles-bg2 {
+    position: absolute;
+    bottom: -80px;
+    left: -60px;
+    opacity: .08;
+}
+
+.c3-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 6px;
+}
+
+.c3-logo-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #b07fd4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.c3-logo-ring svg {
+    width: 24px;
+    height: 24px;
+}
+
+.c3-org {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #9458c0;
+    text-align: center;
+    margin-bottom: 14px;
+}
+
+.c3-hr {
+    width: 200px;
+    height: 1px;
+    background: #d4a8e8;
+    margin: 0 auto 14px;
+}
+
+.c3-cert-word {
+    font-family: "Lora", Georgia, serif;
+    font-size: 38px;
+    font-weight: 600;
+    color: #6b2f9e;
+    text-align: center;
+    letter-spacing: .06em;
+    margin-bottom: 2px;
+}
+
+.c3-cert-sub {
+    font-family: "Nunito", sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #c495e0;
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.c3-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.c3-ribbon-line {
+    flex: 1;
+    height: 1px;
+    background: #ddb8f0;
+    max-width: 60px;
+}
+
+.c3-ribbon-icon {
+    color: #c07ad4;
+    font-size: 12px;
+}
+
+.c3-award-text {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    color: #b07fd4;
+    text-align: center;
+    margin-bottom: 8px;
+    font-style: italic;
+    letter-spacing: .04em;
+}
+
+.c3-name {
+    font-family: "Lora", Georgia, serif;
+    font-size: 40px;
+    font-style: italic;
+    color: #4a1870;
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.15;
+}
+
+.c3-course-box {
+    background: #f0e4fa;
+    border: 1px solid #d4a8e8;
+    padding: 12px 32px;
+    text-align: center;
+    margin: 0 auto 20px;
+    display: inline-block;
+}
+
+.c3-course-lbl {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #b07fd4;
+    margin-bottom: 4px;
+}
+
+.c3-course-name {
+    font-family: "Lora", Georgia, serif;
+    font-size: 18px;
+    color: #5a2080;
+    font-weight: 600;
+}
+
+.c3-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid #e0c4f0;
+}
+
+.c3-sig {
+    text-align: center;
+    flex: 1;
+}
+
+.c3-sig-line {
+    width: 120px;
+    height: 1px;
+    background: #d4a8e8;
+    margin: 0 auto 5px;
+}
+
+.c3-sig-name {
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-style: italic;
+    color: #7a3aa8;
+    margin-bottom: 2px;
+}
+
+.c3-sig-role {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #c495e0;
+}
+
+.c3-seal-center {
+    flex: 0 0 80px;
+    display: flex;
+    justify-content: center;
+}
+
+.c3-date-box {
+    text-align: center;
+    flex: 1;
+}
+
+.c3-date-lbl {
+    font-family: "Nunito", sans-serif;
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #b07fd4;
+    margin-bottom: 4px;
+}
+
+.c3-date-val {
+    font-family: "Lora", Georgia, serif;
+    font-size: 15px;
+    color: #5a2080;
+    font-weight: 600;
+}
