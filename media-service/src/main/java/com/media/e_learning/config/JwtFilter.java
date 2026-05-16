@@ -59,9 +59,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     authorities
                 );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (Exception e) {
-            log.error("Introspect token error: {}", e.getMessage());
-        }
+        } catch (Exception ignored) {}
         filterChain.doFilter(request, response);
     }
 

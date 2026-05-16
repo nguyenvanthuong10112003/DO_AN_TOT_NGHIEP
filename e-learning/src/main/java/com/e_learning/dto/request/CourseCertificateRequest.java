@@ -15,11 +15,5 @@ public class CourseCertificateRequest {
     private String template;
     @NotBlank
     @Length(max = 100)
-    private String academyName;
-    @NotBlank
-    @Length(max = 100)
-    private String courseName;
-    @NotBlank
-    @Length(max = 100)
     private String professorName;
 }

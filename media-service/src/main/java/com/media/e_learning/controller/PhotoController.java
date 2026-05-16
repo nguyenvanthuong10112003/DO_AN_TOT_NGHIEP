@@ -39,7 +39,7 @@ public class PhotoController {
 
     @PostMapping(value = "/remove")
     public ResponseApi<?> removePhoto(@RequestBody @NotEmpty List<String> ids) {
-        photoService.removePhoto(ids);
+        photoService.removePhoto(ids, false);
         return ResponseApi.createSuccess();
     }
 

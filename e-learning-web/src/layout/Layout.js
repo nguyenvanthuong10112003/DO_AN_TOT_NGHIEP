@@ -4,10 +4,10 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import Footer from "./Footer";
 import ConfirmAlert from "../comp/ComfirmAlert";
-import { getUserInfo, hasData, hasRole } from "../helper/utils";
+import { getUserInfo, hasData, hasRole, isArray, isFunction } from "../helper/utils";
 import { LOCAL_STORAGE_KEY, USER_ROLE } from "../define/define";
 import { usePrompt } from "../include/usePrompt";
-import { HasUnsavedChangesStore } from "../store/HasUnsavedChangesStore";
+import { hasUnsavedChangesStore, HasUnsavedChangesStore } from "../store/HasUnsavedChangesStore";
 
 const Layout = () => {
     const [isOpenSideBar, setIsOpenSidebar] = useState(false);
@@ -16,6 +16,7 @@ const Layout = () => {
     const [title, setTitle] = useState();
     const [currentUser, setCurrentUser] = useState();
     const navigate = useNavigate();
+    const [isMainFull, setIsMainFull] = useState(false);
 
     const onConfirmAlertCloseDefault = () => {
         setConfirmAlertAttr(prev => ({ ...prev, isOpen: false }))
@@ -41,12 +42,12 @@ const Layout = () => {
             ...prev, ...attr, isOpen: true,
             onAccept: () => {
                 onConfirmAlertAcceptDefault();
-                if (attr?.onAccept instanceof Function)
+                if (isFunction(attr?.onAccept))
                     attr?.onAccept();
             },
             onClose: () => {
                 onConfirmAlertCloseDefault();
-                if (attr?.onClose instanceof Function)
+                if (isFunction(attr?.onClose))
                     attr?.onClose();
             }
         }))
@@ -62,7 +63,7 @@ const Layout = () => {
             setIsOpenSidebar(true);
         const pathNameSplit = document.location.pathname.split('/');
         setActiveItem(pathNameSplit[1].trim().length === 0 ? 'home' : pathNameSplit[1]);
-        setCurrentUser(getUserInfo())
+        setCurrentUser(getUserInfo());
     }, []);
     useEffect(() => {
         document.title = title || (hasRole(USER_ROLE.ADMIN) ? process.env.REACT_APP_MANAGEMENT_NAME : process.env.REACT_APP_NAME);
@@ -70,15 +71,21 @@ const Layout = () => {
     const toggleSideBar = () => {
         setIsOpenSidebar(prev => !prev);
     }
+    const handleReset = () => {
+        setIsMainFull(false);
+        setControllers([]);
+        setTitle('');
+        hasUnsavedChangesStore.set(false);
+    }
     return <>
         <div className="">
             <Header currentUser={currentUser} toggleSideBar={toggleSideBar} />
             <Sidebar currentUser={currentUser} isOpenSideBar={isOpenSideBar} />
             <div className={`min-h-screen pt-16 bg-gray-50 w-full ${isOpenSideBar ? 'sm:pl-[20rem]' : ''} transition-all duration-500 ease-in-out flex flex-col justify-between`}>
-                <div className="p-2 flex-1 pb-6">
-                    {controllers && controllers instanceof Array && controllers.length > 0 && <div className="flex flex-row">
+                <div className={`flex-1 ${isMainFull !== true && `p-2 ${controllers && isArray(controllers) && controllers.length > 0 && 'pb-6'}`}`}>
+                    {controllers && isArray(controllers) && controllers.length > 0 && <div className="flex flex-row">
                         {controllers.map((controller, index) => {
-                            return <li key={index} className="list-none text-md">
+                            return <li key={index} className="list-none text-sm">
                                 {index !== 0 && <span className="mx-2 text-gray-500">{'>'}</span>}
                                 <Link to={controller.url || '#'}
                                     className={`no-underline text-md text-gray-500 cursor-default ${controller.url && 'hover:text-blue-600 hover:underline cursor-pointer'}`}>
@@ -88,7 +95,7 @@ const Layout = () => {
                         })}
                     </div>}
                     <div>
-                        <Outlet context={{ setControllers, setTitle, openConfirmAlert, setCurrentUser }} />
+                        <Outlet context={{ setControllers, setTitle, openConfirmAlert, setCurrentUser, setIsMainFull, handleReset}} />
                     </div>
                 </div>
                 <Footer currentUser={currentUser} />

@@ -1,5 +1,5 @@
 import React from "react";
-import { hasData } from "../helper/utils";
+import { hasData, isFunction } from "../helper/utils";
 
 const Field = ({ target, field, editField, tempValue, setTempValue, handleSave, handleCancel, handleEdit }) => {
     return target && field && (
@@ -35,7 +35,7 @@ const Field = ({ target, field, editField, tempValue, setTempValue, handleSave, 
                         />)
                 ) : (
                     <span className="w-full truncate">
-                        <span className="text-base text-gray-700">{(field.displayValue instanceof Function ? field.displayValue(target[field.fieldName]) : target[field.fieldName]) || 'Không có dữ liệu'}</span>
+                        <span className="text-base text-gray-700">{(isFunction(field.displayValue) ? field.displayValue(target[field.fieldName]) : target[field.fieldName]) || 'Không có dữ liệu'}</span>
                     </span>
                 )}
 

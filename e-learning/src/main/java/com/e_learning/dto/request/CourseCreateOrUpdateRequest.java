@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @Data
@@ -21,6 +21,9 @@ import java.util.List;
 @Builder
 public class CourseCreateOrUpdateRequest {
     private String id;
+    @NotBlank
+    @Length(max = 30)
+    private String code;
     @NotBlank
     @Length(max = 100)
     private String name;
@@ -41,9 +44,9 @@ public class CourseCreateOrUpdateRequest {
     @Size(max = 10)
     private List<String> lstRequiredKnowledge;
     @Size(max = 10)
-    private List<String> lstTagName;
+    private List<String> tags;
     @Size(max = 10)
-    private List<String> lstSuggestCourse;
+    private List<String> suggestCourses;
     private Boolean issuingCertificate;
     private CourseCertificateRequest certificate;
     @Length(max = 100)

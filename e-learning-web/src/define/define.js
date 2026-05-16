@@ -26,7 +26,9 @@ export const PAGE_LOCATION = Object.freeze({
     USER_CHANGE_PW: '/user/change-pw',
     ADMIN_CREATE_COURSE: '/admin/course/create',
     ADMIN_UPDATE_COURSE: '/admin/course/update',
-    ADMIN_MANAGEMENT_COURSE: '/admin/course'
+    ADMIN_DETAIL_COURSE: (courseId) => `/admin/course/${courseId}`,
+    ADMIN_MANAGEMENT_COURSE: '/admin/course',
+    ADMIN_MANAGEMENT_LESSON: (courseId) => `/admin/course/${courseId}/lesson`
 })
 
 export const USER_ROLE = Object.freeze({
@@ -34,7 +36,7 @@ export const USER_ROLE = Object.freeze({
     USER: 'USER',
 })
 
-export const DIFFCULT = Object.freeze({
+export const DIFFICULT = Object.freeze({
     BASIC: 'Cơ bản',
     INTERMEDIATE: 'Trung cấp',
     ADVANCED: 'Nâng cao',

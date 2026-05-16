@@ -13,16 +13,27 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Course extends BaseEntity {
+    public enum COLUMNS {
+        ID,
+        CODE,
+        NAME,
+        DESCRIPTION,
+        CREATED_TIME,
+        UPDATED_TIME,
+        PRICE
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     @Column(nullable = false)
+    private String code;
+    @Column(nullable = false)
     private String name;
     private String description;
-    private String createdBy;
 
     // Các thẻ để tìm kiếm
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "course_tags",
         joinColumns = @JoinColumn(name = "course_id"),
@@ -32,10 +43,11 @@ public class Course extends BaseEntity {
 
     // Ngôn ngữ
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CourseLanguage language;
 
     // Các khóa học gợi ý trước khi học khóa học này
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "course_suggestions",
         joinColumns = @JoinColumn(name = "course_id"),
@@ -53,10 +65,12 @@ public class Course extends BaseEntity {
 
     // Độ khó
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CourseDifficult difficult;
 
     // Loại khóa học | FREE hoặc PAID
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CourseType type;
 
     // khóa học thuộc chủ đề, lĩnh vực
@@ -68,11 +82,11 @@ public class Course extends BaseEntity {
     private Boolean issuingCertificate;
 
     // thông tin chứng chỉ
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private CourseCertificate certificate;
 
     // các kiến thức cần có
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "course_lst_required_knowledge",
         joinColumns = @JoinColumn(name = "course_id"),

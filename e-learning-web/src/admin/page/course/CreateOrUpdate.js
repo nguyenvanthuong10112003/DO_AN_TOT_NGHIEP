@@ -1,10 +1,10 @@
 import { toast } from "react-toastify";
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import './create_or_edit_style.css';
-import { useEffect, useState } from 'react';
-import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isFunctionType } from '../../../helper/utils';
-import { ACTION, DIFFCULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE } from '../../../define/define';
-import { getAllSector, getAllTopic } from '../../../service/CourseService';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
+import './style.css';
+import { use, useEffect, useState } from 'react';
+import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isAllNumberOrLatin, isArray, isFunction, isObject, trimAll } from '../../../helper/utils';
+import { ACTION, DIFFICULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE } from '../../../define/define';
+import { createOrUpdateCourse, getAllSector, getAllTopic, getCourseById, searchCourse, searchTag } from '../../../service/CourseService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faClock, faClose } from '@fortawesome/free-solid-svg-icons';
 import Template1 from '../../../comp/CertificateTemplate/Template1';
@@ -14,8 +14,7 @@ import Template4 from '../../../comp/CertificateTemplate/Template4';
 import React from "react";
 import { removePhoto, uploadTempPhoto } from "../../../service/PhotoService";
 import { hasUnsavedChangesStore } from "../../../store/HasUnsavedChangesStore";
-const KEY_ADD_NEW_SECTOR = "add_new_sector";
-const KEY_ADD_NEW_TOPIC = "add_new_topic";
+import AutocompleteInput from "../../../comp/AutocompleteInput";
 
 const certificateTemplates = [
     { template: Template1, name: 'Mẫu 1', code: 'Template1' },
@@ -25,13 +24,13 @@ const certificateTemplates = [
 ];
 
 const courseConstruct = () => ({
-    diffcult: 'BASIC',
+    difficult: 'BASIC',
     type: 'FREE',
     language: 'VI'
 });
 
 const CreateOrUpdate = ({ action }) => {
-    const { setTitle, setControllers, openConfirmAlert } = useOutletContext();
+    const { setControllers, setTitle, handleReset, openConfirmAlert } = useOutletContext();
     const [sectors, setSectors] = useState([]);
     const [topics, setTopics] = useState([]);
     const [isAddNewTopic, setIsAddNewTopic] = useState(false);
@@ -45,17 +44,15 @@ const CreateOrUpdate = ({ action }) => {
     const [course, setCourse] = useState(courseConstruct());
     const [lstTemp, setLstTemp] = useState({});
     const [errors, setErrors] = useState({})
+    const [searchSuggestCourse, setSearchSuggestCourse] = useState([]);
+    const [searchTagRs, setSearchTagRs] = useState([]);
     const navigate = useNavigate();
+    const [params] = useSearchParams();
 
     useEffect(() => {
-        const title = action === ACTION.CREATE ? 'Tạo khóa học' : (action === ACTION.UPDATE ?? 'Cập nhật khóa học');
-        if (isFunctionType(setTitle)) setTitle(title);
-        if (isFunctionType(setControllers)) setControllers([{ name: 'Quản lý khóa học', url: PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE }, { name: title }]);
-        getAllSector()
-            .then(response => {
-                setSectors(response?.data?.data)
-            })
-            .catch(_ => { })
+        const title = action === ACTION.CREATE ? 'Tạo khóa học' : (action === ACTION.UPDATE && 'Cập nhật khóa học');
+        if (isFunction(setTitle)) setTitle(title);
+        if (isFunction(setControllers)) setControllers([{ name: 'Quản lý khóa học', url: PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE }, { name: title }]);
         if (action === ACTION.CREATE) {
             const newKey = Date.now().toString();
             setCurrentKeyTemp(newKey)
@@ -68,7 +65,44 @@ const CreateOrUpdate = ({ action }) => {
                 lstTempLocal[newKey] = { ...course };
             setLstTemp(lstTempLocal);
         }
-    }, [])
+        const init = async () => {
+            if (action === ACTION.UPDATE) {
+                const courseId = params.get('id');
+                if (!hasData(courseId)) {
+                    toast.error('Không tìm thấy khóa học cần cập nhật!');
+                    return;
+                }
+                try {
+                    const response = await getCourseById(courseId);
+                    const c = response?.data?.data;
+                    if (!hasData(c) || !hasData(c?.id)) {
+                        toast.error('Không tìm thấy khóa học cần cập nhật!');
+                        return;
+                    }
+                    c.price = formatNumber(c.price);
+                    setLstTemp({ [c.id]: c });
+                    setKeyTemp(c.id);
+                    setCourse(c);
+                    getAllTopic(response?.data?.data?.sector?.id)
+                        .then(response => {
+                            setTopics(response?.data?.data);
+                        })
+                        .catch(_ => { })
+                } catch {
+                    return;
+                }
+            }
+            getAllSector()
+                .then(response => {
+                    setSectors(response?.data?.data)
+                })
+                .catch(_ => { })
+        }
+        init();
+        return () => {
+            handleReset?.();
+        };
+    }, [action]);
 
     useEffect(() => {
         if (isAddNewSector === true)
@@ -84,7 +118,7 @@ const CreateOrUpdate = ({ action }) => {
 
     useEffect(() => {
         setCourse(prev => {
-            const { newSectorName, sectorId, ...newObj } = { ...prev };
+            const { newTopicName, topicId, ...newObj } = { ...prev };
             if (isAddNewTopic === true) {
                 newObj.newTopicName = '';
             }
@@ -99,17 +133,14 @@ const CreateOrUpdate = ({ action }) => {
     }, [course, lstTemp, keyTemp]);
 
     const handleSectorSelected = (e) => {
-        if (e.target.value === KEY_ADD_NEW_SECTOR) {
-            e.target.value = course?.sectorId || '';
-            return;
-        }
         const sector = sectors.find(s => s.id === e.target.value);
         if (!hasData(sector)) {
             setCourse(prev => {
-                if (hasData(prev.sectorId))
-                    delete prev.sectorId;
-                return prev;
+                const { sectorId, ...others } = { ...prev };
+                return others;
             })
+            setTopics([])
+            return;
         }
         setCourse(prev => ({ ...prev, sectorId: sector.id }))
         if (hasData(sector.topics)) {
@@ -131,17 +162,13 @@ const CreateOrUpdate = ({ action }) => {
     }
 
     const handleTopicSelected = (e) => {
-        if (e.target.value === KEY_ADD_NEW_TOPIC) {
-            e.target.value = course?.topicId || '';
-            return;
-        }
         const topic = topics.find(t => t.id === e.target.value);
         if (!hasData(topic)) {
             setCourse(prev => {
-                if (hasData(prev.topicId))
-                    delete prev.topicId;
-                return prev;
+                const { topicId, ...others } = { ...prev };
+                return others;
             })
+            return;
         }
         setCourse(prev => ({ ...prev, topicId: topic.id }))
     }
@@ -161,41 +188,38 @@ const CreateOrUpdate = ({ action }) => {
             return;
         }
 
-        const oldThumbnailId = course.thumbnailId;
-
         try {
             const response = await uploadTempPhoto([file])
             const photoResponse = response?.data?.data?.[0];
-            setCourse(prev => ({ ...prev, thumbnail: photoResponse.url, thumbnailId: photoResponse.id, thumbnailFile: selectedFiles[0] }));
-            if (hasData(oldThumbnailId))
-                removePhoto([oldThumbnailId]);
+            setCourse(prev => ({ ...prev, thumbnail: photoResponse.url, thumbnailId: photoResponse.id }));
         } catch { }
     };
 
-    const handleRemoveThumbnail = () => {
+    const handleRemoveThumbnail = async () => {
         const oldThumbnailId = course.thumbnailId;
         if (!hasData(oldThumbnailId)) return;
-        removePhoto([oldThumbnailId])
-            .finally(_ => {
-                setCourse(prev => { const { thumbnail, thumbnailId, ...newObj } = { ...prev }; return newObj; })
-            })
+        setCourse(prev => { const { thumbnail, thumbnailId, ...newObj } = { ...prev }; return newObj; })
     }
 
     const handleAddTag = () => {
-        if (course?.lstTagName?.find(tagName => tagName === inputTag) !== undefined) {
+        const newTag = inputTag?.trim() || '';
+        if (!hasData(newTag)) return;
+        if (course?.tags?.find(tagName => tagName === newTag) !== undefined) {
             toast.error('Tag đã được thêm trước đó');
             return;
         }
-        setCourse(prev => ({ ...prev, lstTagName: [...(prev.lstTagName || []), inputTag] }))
+        setCourse(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }))
         setInputTag('')
     }
 
     const handleAddKeyWord = () => {
-        if (course?.lstRequiredKnowledge?.find(kw => kw === inputKeyWord) !== undefined) {
+        const newKeyWord = inputKeyWord?.trim() || '';
+        if (!hasData(newKeyWord)) return;
+        if (course?.lstRequiredKnowledge?.find(kw => kw === newKeyWord) !== undefined) {
             toast.error('Từ khóa đã được thêm trước đó');
             return;
         }
-        setCourse(prev => ({ ...prev, lstRequiredKnowledge: [...(prev.lstRequiredKnowledge || []), inputKeyWord] }))
+        setCourse(prev => ({ ...prev, lstRequiredKnowledge: [...(prev.lstRequiredKnowledge || []), newKeyWord] }))
         setInputKeyWord('')
     }
 
@@ -220,7 +244,7 @@ const CreateOrUpdate = ({ action }) => {
         }
     }
 
-    const handleRemoveTemp = (keyRemove) => {
+    const handleRemoveTemp = (keyRemove, actionCreateTemp) => {
         if (ACTION.CREATE === action && keyRemove !== currentKeyTemp) {
             let index = -1;
             const others = {}
@@ -232,7 +256,8 @@ const CreateOrUpdate = ({ action }) => {
                     others[key] = lstTemp[key];
                 })
             localStorage.setItem(LOCAL_STORAGE_KEY.COURSE_DATA_TEMP, JSON.stringify(others))
-            toast.success('Xóa thành công!');
+            if (actionCreateTemp !== true)
+                toast.success('Xóa thành công!');
             others[currentKeyTemp] = lstTemp[currentKeyTemp];
             if (String(keyRemove) === String(keyTemp)) {
                 const newKeyTemp = (keys[index + 1] || keys[index - 1] || keys[0]);
@@ -243,16 +268,31 @@ const CreateOrUpdate = ({ action }) => {
         }
     }
 
+    const handleChangeTemp = (temp) => {
+        const excute = () => {
+            if (temp === keyTemp)
+                return;
+            setKeyTemp(temp);
+            setCourse({ ...lstTemp[temp] })
+            setErrors({});
+        }
+        if (hasUnsavedChangesStore.get() !== true || window.confirm('Bạn có thay đổi chưa lưu. Tiếp tục?'))
+            excute();
+    }
+
     const isAddTagDisabled = () => {
-        return !(hasData(inputTag) && (course?.lstTagName || []).length <= 10 && course?.lstTagName?.find(tagItem => tagItem === inputTag) === undefined)
+        const newTag = inputTag?.trim() || '';
+        return !(hasData(newTag) && (course?.tags || []).length <= 10 && course?.tags?.find(tagItem => tagItem === newTag) === undefined)
     }
 
     const isAddKeyWordDisabled = () => {
-        return !(hasData(inputKeyWord) && (course?.lstRequiredKnowledge || []).length <= 10 && course?.lstRequiredKnowledge?.find(kw => kw === inputKeyWord) === undefined);
+        const newKeyWord = inputKeyWord?.trim() || '';
+        return !(hasData(newKeyWord) && (course?.lstRequiredKnowledge || []).length <= 10 && course?.lstRequiredKnowledge?.find(kw => kw === newKeyWord) === undefined);
     }
 
     const handlerSave = () => {
-        const errors = validateSave();
+        const params = trimAll({ ...course });
+        const errors = validateSave(params);
         setErrors(errors)
         if (Object.values(errors)?.length > 0) {
             toast.error(
@@ -264,41 +304,79 @@ const CreateOrUpdate = ({ action }) => {
             );
             return
         }
-
+        if (hasData(params.price))
+            params.price = Array.from(params.price?.split(''))?.filter(item => item >= '0' && item <= '9')?.join('')
+        if (hasData(params.suggestCourses))
+            params.suggestCourses = params.suggestCourses.map(c => c.id);
+        openConfirmAlert({
+            type: 'warning',
+            title: 'Xác nhận cập nhật',
+            label: 'Bạn có chắc muốn lưu thay đổi?',
+            onAccept: () => {
+                createOrUpdateCourse(params)
+                    .then(_ => {
+                        toast.success(action === ACTION.CREATE ? 'Thêm thành công' : 'Cập nhật thành công')
+                        if (ACTION.UPDATE === action) {
+                            setLstTemp(prev => ({ ...prev, [keyTemp]: course }))
+                        } else {
+                            const newCourse = courseConstruct();
+                            if (keyTemp === currentKeyTemp) {
+                                const newKey = Date.now().toString();
+                                const { [keyTemp]: _, ...others } = { ...(lstTemp || {}) };
+                                setCurrentKeyTemp(newKey)
+                                setKeyTemp(newKey)
+                                setCourse(newCourse);
+                                others[newKey] = newCourse;
+                                setLstTemp(others);
+                            } else
+                                handleRemoveTemp(keyTemp, true)
+                        }
+                    })
+                    .catch(_ => { })
+            }
+        })
     }
 
-    const validateSave = () => {
+    const validateSave = (course) => {
         const errors = {};
+
+        if (!hasData(course?.code))
+            errors.code = 'Mã khóa học không được để trống!';
+        else if (course?.code.length > 30)
+            errors.code = 'Mã khóa học không quá 30 ký tự!';
+        else if (isAllNumberOrLatin(course.code) === false)
+            errors.code = 'Mã khóa học chỉ được chứa ký tự Latin và số!';
+
         if (!hasData(course?.name))
             errors.name = 'Tên khóa học không được để trống!';
         else if (course?.name.length > 100)
             errors.name = 'Tên khóa học không quá 100 ký tự!';
 
-        if (!hasData(course?.sectorId) && isAddNewSector === false)  
+        if (!hasData(course?.sectorId) && isAddNewSector !== true)
             errors.sector = 'Lĩnh vực không được để trống!';
-        else {
+        else if (isAddNewSector === true) {
             if (!hasData(course?.newSectorName))
                 errors.newSectorName = 'Tên lĩnh vực không được để trống!';
             else if (course?.newSectorName.length > 100)
                 errors.newSectorName = 'Tên lĩnh vực không được quá 100 ký tự!';
         }
 
-        if (!hasData(course?.topicId) && isAddNewTopic === false)
+        if (!hasData(course?.topicId) && isAddNewTopic !== true)
             errors.topic = 'Chủ đề/ danh mục không được để trống!';
-        else {
+        else if (isAddNewTopic === true) {
             if (!hasData(course?.newTopicName))
                 errors.newTopicName = 'Tên chủ đề/ danh mục không được để trống!';
             else if (course?.newTopicName.length > 100)
                 errors.newTopicName = 'Tên Chủ đề/ danh mục không được quá 100 ký tự!';
         }
 
-        if (!hasData(course?.description)) 
+        if (!hasData(course?.description))
             errors.description = 'Mô tả ngắn không được để trống!';
         else if (course?.description.length > 300)
             errors.description = 'Mô tả ngắn không được quá 300 ký tự!';
 
-        if (!hasData(course?.diffcult))
-            errors.diffcult = 'Độ khó không được để trống!';
+        if (!hasData(course?.difficult))
+            errors.difficult = 'Độ khó không được để trống!';
 
         if (!hasData(course?.language))
             errors.language = 'Ngôn ngữ giảng dạy không được để trống!'
@@ -320,39 +398,77 @@ const CreateOrUpdate = ({ action }) => {
         return errors;
     }
 
+    const handleSearchSuggestCourse = (keyword) => {
+        searchCourse(keyword)
+            .then(response => {
+                let lst = response?.data?.data || [];
+                lst = lst.filter(c => c.id !== course?.id && c?.suggestCourses?.find(suggest => suggest.id === course.id) === undefined && course?.suggestCourses?.find(suggest => suggest.id === c.id) === undefined);
+                setSearchSuggestCourse(lst);
+            })
+            .catch(_ => { })
+    }
+
+    const handleAddSuggestCourse = () => {
+        if (isObject(inputSuggestCourse)) {
+            setCourse(prev => ({ ...prev, suggestCourses: [...(prev.suggestCourses || []), inputSuggestCourse] }))
+            setInputSuggestCourse('');
+        }
+    }
+
+    const handleSearchTag = (keyword) => {
+        searchTag(keyword)
+            .then(response => {
+                let lst = response?.data?.data || [];
+                lst = lst.filter(tag => course?.tags?.find(tagName => tagName === tag) === undefined);
+                setSearchTagRs(lst);
+            })
+            .catch(_ => { })
+    }
+
+    const handleSearchRequiredKnowledge = (keyword) => {
+        searchTag(keyword)
+            .then(response => {
+                let lst = response?.data?.data || [];
+                lst = lst.filter(tag => course?.lstRequiredKnowledge?.find(tagName => tagName === tag) === undefined);
+                setSearchTagRs(lst);
+            })
+            .catch(_ => { })
+    }
+
     return <div className="max-w-3xl w-full mx-auto py-6 space-y-4">
         <div className="p-4 bg-white rounded-xl border">
-            <button type="button" className="space-x-2 hover:text-blue-500" onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
+            <button type="button" className="space-x-2 hover:text-blue-500" onClick={() => navigate(-1)}>
                 <FontAwesomeIcon icon={faArrowLeft} />
                 <span>Quay lại</span>
             </button>
 
-            <hr className="my-4"></hr>
-
-            {ACTION.CREATE === action && hasData(lstTemp) && <div className="p-4 bg-white border rounded-xl h-auto max-w-3xl w-full">
-                <h3 className="font-semibold uppercase section-title">Các bản nháp trước đó</h3>
-                <div className="flex flex-col mt-2 gap-1">
-                    {Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a)).map((temp, index) => {
-                        const courseTemp = lstTemp[temp];
-                        return <React.Fragment key={index}>
-                            {index > 0 && <hr />}
-                            <button onClick={() => { if (temp === keyTemp) return; setKeyTemp(temp); setCourse({ ...lstTemp[temp] }) }} type="button" className={`py-2 px-4 text-start hover:bg-gray-100 flex flex-row items-center justify-between rounded-lg ${keyTemp === temp && '!bg-[var(--color-background-secondary)]'}`}>
-                                <span className="max-w-full overflow-hidden text-ellipsis text-nowrap">
-                                    <FontAwesomeIcon icon={faClock} className="me-2" />
-                                    <span>{formatDateTime(new Date(Number(temp)))} {courseTemp?.name && '-'} {courseTemp?.name || ''}</span>
-                                </span>
-                                {currentKeyTemp !== temp && <FontAwesomeIcon onClick={(e) => { e.stopPropagation(); handleRemoveTemp(temp) }} icon={faClose} className="ms-2 hover:text-red-600 float-end" />}
-                            </button>
-                        </React.Fragment>
-                    })}
+            {ACTION.CREATE === action && hasData(lstTemp) && <>
+                <hr className="my-4"></hr>
+                <div className="p-4 bg-white border rounded-xl h-auto max-w-3xl w-full">
+                    <h3 className="font-semibold uppercase section-title">Các bản nháp trước đó</h3>
+                    <div className="flex flex-col mt-2 gap-1">
+                        {Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a)).map((temp, index) => {
+                            const courseTemp = lstTemp[temp];
+                            return <React.Fragment key={index}>
+                                {index > 0 && <hr />}
+                                <button onClick={() => handleChangeTemp(temp)} type="button" className={`py-2 px-4 text-start hover:bg-gray-100 flex flex-row items-center justify-between rounded-lg ${keyTemp === temp && '!bg-[var(--color-background-secondary)]'}`}>
+                                    <span className="max-w-full overflow-hidden text-ellipsis text-nowrap">
+                                        <FontAwesomeIcon icon={faClock} className="me-2" />
+                                        <span>{formatDateTime(new Date(Number(temp)))} {courseTemp?.name && '-'} {courseTemp?.name || ''}</span>
+                                    </span>
+                                    {currentKeyTemp !== temp && <FontAwesomeIcon onClick={(e) => { e.stopPropagation(); handleRemoveTemp(temp) }} icon={faClose} className="ms-2 hover:text-red-600 float-end" />}
+                                </button>
+                            </React.Fragment>
+                        })}
+                    </div>
                 </div>
-            </div>}
+            </>}
         </div>
-        <div className="p-4 bg-white rounded-xl border">
+        {(action === ACTION.CREATE || (action === ACTION.UPDATE && hasData(course?.id))) && <div className="p-4 bg-white rounded-xl border">
             <div className="page-header pb-4 mb-4">
                 <div>
-                    <div className="page-title text-xl uppercase">Tạo khóa học mới</div>
-                    <div className="page-sub text-md">Điền đầy đủ thông tin để xuất bản khóa học</div>
+                    <div className="page-title text-xl uppercase">{ACTION.CREATE === action ? 'Tạo khóa học mới' : 'Cập nhật khóa học'}</div>
+                    <div className="page-sub text-md">Điền đầy đủ thông tin {ACTION.CREATE === action ? 'để tạo khóa học mới' : 'để cập nhật khóa học'}</div>
                 </div>
             </div>
 
@@ -361,9 +477,16 @@ const CreateOrUpdate = ({ action }) => {
                 <div className="form-grid gap-4">
                     <div className="field form-full">
                         <span className='flex flex-row'>
+                            <label>Mã khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
+                        </span>
+                        <input className={`${errors?.code && '!border-red-600'}`} max={100} type="text" id="f-code" placeholder="Ví dụ: KH01"
+                            value={course?.code || ''} onChange={(e) => setCourse(prev => ({ ...prev, code: e.target.value }))} />
+                    </div>
+                    <div className="field form-full">
+                        <span className='flex flex-row'>
                             <label>Tên khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
                         </span>
-                        <input className={ `${errors?.name && '!border-red-600'}`} max={100} type="text" id="f-name" placeholder="Ví dụ: Lập trình Python từ cơ bản đến nâng cao"
+                        <input className={`${errors?.name && '!border-red-600'}`} max={100} type="text" id="f-name" placeholder="Ví dụ: Lập trình Python từ cơ bản đến nâng cao"
                             value={course?.name || ''} onChange={(e) => setCourse(prev => ({ ...prev, name: e.target.value }))} />
                     </div>
                     <div className="field">
@@ -376,7 +499,7 @@ const CreateOrUpdate = ({ action }) => {
                         </label>
                         {isAddNewSector === false && <select id="f-field" className={errors?.sector && '!border-red-600'} onChange={handleSectorSelected} value={course?.sectorId || ''}>
                             <option value="">-- Chọn lĩnh vực --</option>
-                            {sectors?.map(sector => <option value={sector.id || ''}>{sector.name}</option>)}
+                            {sectors?.map((sector, index) => <option key={index} value={sector.id || ''}>{sector.name}</option>)}
                         </select>}
                         {isAddNewSector === true && <input className={errors?.newSectorName && '!border-red-600'} placeholder='Nhập tên lĩnh vực mới' value={course?.newSectorName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newSectorName: e.target.value }))} />}
                     </div>
@@ -390,7 +513,7 @@ const CreateOrUpdate = ({ action }) => {
                         </label>
                         {isAddNewTopic === false && <select id="f-topic" onChange={handleTopicSelected} value={course?.topicId || ''}>
                             <option value="">-- Chọn chủ đề --</option>
-                            {topics?.map(topic => <option value={topic.id || ''}>{topic.name}</option>)}
+                            {topics?.map((topic, index) => <option key={index} value={topic.id || ''}>{topic.name}</option>)}
                         </select>}
                         {isAddNewTopic === true && <input className={errors?.newTopicName && '!border-red-600'} placeholder='Nhập tên chủ đề/danh mục mới' value={course?.newTopicName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newTopicName: e.target.value }))} />}
                     </div>
@@ -407,9 +530,9 @@ const CreateOrUpdate = ({ action }) => {
                             <div className="thumb-label">Nhấn để tải ảnh lên</div>
                             <div className="thumb-hint">PNG, JPEG, WEBP, GIF · Tỉ lệ 16:9 · Tối đa 5MB</div>
                         </div>}
-                        {hasData(course?.thumbnail) && <div className="thumb-preview border relative !block overflow-hidden" id="thumb-prev">
+                        {hasData(course?.thumbnail) && <div className="thumb-preview border relative !block overflow-hidden !h-80" id="thumb-prev">
                             <button onClick={handleRemoveThumbnail} type='button' className='absolute top-1 left-1 bg-white border border-t-0 border-l-0 p-1 hover:bg-gray-100 rounded-md'><FontAwesomeIcon icon={faClose} />Hủy </button>
-                            <img src={course?.thumbnail} alt='thumbnail' className='w-full h-full object-cover' />
+                            <img src={course?.thumbnail} alt='thumbnail' className='w-full h-full aspect-square object-cover' />
                         </div>}
                         <input type="file" id="thumb-inp" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
                     </div>
@@ -417,31 +540,31 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Độ khó <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
                         <div className="difficulty-group grid grid-cols-4">
-                            {Object.keys(DIFFCULT).map((diffKey, index) => <button key={index} className={`diff-btn btn-secondary w-full ${diffKey === course?.diffcult ? 'active' : ''}`} onClick={() => setCourse(prev => ({ ...prev, diffcult: diffKey }))}>{DIFFCULT[diffKey]}</button>)}
+                            {Object.keys(DIFFICULT).map((diffKey, index) => <button type="button" key={index} className={`diff-btn btn-secondary w-full ${diffKey === course?.difficult ? 'active' : ''}`} onClick={() => setCourse(prev => ({ ...prev, difficult: diffKey }))}>{DIFFICULT[diffKey]}</button>)}
                         </div>
                     </div>
                     <div className="field form-full">
                         <label>Ngôn ngữ giảng dạy <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
                         <div className="lang-badges">
-                            {Object.keys(LANGUAGE).map((lanKey, index) => <button key={index} className={`btn-secondary lang-badge ${course?.language === lanKey && 'selected'}`} onClick={() => setCourse(prev => ({ ...prev, language: lanKey }))}>{LANGUAGE[lanKey]}</button>)}
+                            {Object.keys(LANGUAGE).map((lanKey, index) => <button type="button" key={index} className={`btn-secondary lang-badge ${course?.language === lanKey && 'selected'}`} onClick={() => setCourse(prev => ({ ...prev, language: lanKey }))}>{LANGUAGE[lanKey]}</button>)}
                         </div>
                     </div>
                     <div className="field">
                         <label>Loại khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
                         <div className="price-toggle">
-                            <button className={`pt-btn ${course?.type === 'FREE' && 'active'}`} id="pt-free" onClick={() => setCourse(prev => ({ ...prev, type: 'FREE', price: undefined }))}>Miễn phí</button>
-                            <button className={`pt-btn ${course?.type === 'PAID' && 'active'}`} id="pt-paid" onClick={() => setCourse(prev => ({ ...prev, type: 'PAID' }))}>Có phí</button>
+                            <button type="button" className={`pt-btn ${course?.type === 'FREE' && 'active'} hover:bg-white`} id="pt-free" onClick={() => setCourse(prev => ({ ...prev, type: 'FREE', price: undefined }))}>Miễn phí</button>
+                            <button type="button" className={`pt-btn ${course?.type === 'PAID' && 'active'} hover:bg-white`} id="pt-paid" onClick={() => setCourse(prev => ({ ...prev, type: 'PAID' }))}>Có phí</button>
                         </div>
                     </div>
                     <div className="field" id="price-field" disabled>
                         <label>Giá (VNĐ) {course?.type === 'PAID' && <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span>}</label>
                         <input value={course?.price || ''} maxLength={18} onChange={(e) => {
                             setCourse(prev => ({ ...prev, price: formatNumber(e.target.value.replace(/[^0-9]/g, '')) }));
-                        }} inputMode="numeric" pattern="[0-9]*" type="text" id="f-price" className={`disabled:opacity-60 transition-all ${errors?.price && '!border-red-600'}`} placeholder="Ví dụ: 499000" min="0" disabled={course?.type === 'FREE'} />
+                        }} inputMode="numeric" pattern="[0-9]*" type="text" id="f-price" className={`disabled:opacity-60 transition-all ${errors?.price && '!border-red-600'}`} placeholder="Ví dụ: 500,000" min="0" disabled={course?.type === 'FREE'} />
                     </div>
                     <div className="field form-full cursor-pointer">
                         <div className="cert-toggle">
-                            <div className={`toggle-sw ${course?.issuingCertificate === true && 'on'}`} id="cert-sw" onClick={() => { setCourse(prev => ({ ...prev, issuingCertificate: !prev.issuingCertificate, certificate: { template: certificateTemplates[0].code } })); setIsPreViewTemplateCer(false) }}></div>
+                            <button type="button" className={`toggle-sw ${course?.issuingCertificate === true && 'on'}`} id="cert-sw" onClick={() => { setCourse(prev => ({ ...prev, issuingCertificate: !prev.issuingCertificate, certificate: { id: prev.certificate?.id, template: certificateTemplates[0].code } })); setIsPreViewTemplateCer(false) }}></button>
                             <div>
                                 <div className="toggle-label">Cấp chứng chỉ hoàn thành</div>
                                 <div className="toggle-sub">Học viên nhận chứng chỉ sau khi hoàn tất khóa học</div>
@@ -486,7 +609,7 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Từ khóa</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 py-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg overflow-hidden w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                            <div className='gap-1 py-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
                                 {course?.lstRequiredKnowledge?.map((inputKeyWord, index) => {
                                     return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 ms-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={inputKeyWord}>
@@ -496,30 +619,55 @@ const CreateOrUpdate = ({ action }) => {
                                         <FontAwesomeIcon icon={faClose} onClick={() => setCourse(prev => ({ ...prev, lstRequiredKnowledge: (prev.lstRequiredKnowledge || []).filter(kw => kw !== inputKeyWord) }))} className='text-sm hover:text-red-600 cursor-pointer' />
                                     </div>
                                 })}
-                                <input value={inputKeyWord || ''} onChange={(e) => setInputKeyWord(e.target.value)} type='text' placeholder='Nhập từ khóa rồi nhấn thêm' className='!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40' />
+                                <AutocompleteInput
+                                    onChange={(e) => handleSearchRequiredKnowledge(e.target.value)}
+                                    classInput={'!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40 w-full'}
+                                    lst={searchTagRs}
+                                    value={inputKeyWord}
+                                    setValue={setInputKeyWord}
+                                    placeholder={'Nhập từ khóa rồi nhấn thêm'}
+                                    getValueItem={(item) => item}
+                                    displayItem={(item) => item}
+                                    optionShowList={searchTagRs?.length > 0}
+                                />
                             </div>
                             <div>
-                                <button className='disabled:opacity-60 disabled:pointer-events-none' disabled={isAddKeyWordDisabled()} onClick={handleAddKeyWord}>+ Thêm</button>
+                                <button type="button" className='disabled:opacity-60 disabled:pointer-events-none' disabled={isAddKeyWordDisabled()} onClick={handleAddKeyWord}>+ Thêm</button>
                             </div>
                         </div>
                     </div>
                     <div className="field form-full">
                         <label>Gợi ý khóa học</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 py-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg overflow-hidden w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
-                                {course?.lstSuggestCourse?.map((suggestItem, index) => {
-                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 ms-1 flex flex-row flex-nowrap items-center`}>
-                                        <div className='text-ellipsis overflow-hidden max-w-20' title={suggestItem?.name}>
-                                            <span className='text-nowrap'>{suggestItem?.name}</span>
+                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                                {course?.suggestCourses?.map((suggestItem, index) => {
+                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
+                                        <div className='text-ellipsis overflow-hidden max-w-20' title={suggestItem.code + ' - ' + suggestItem.name}>
+                                            <span className='text-nowrap'>{suggestItem.code + ' - ' + suggestItem.name}</span>
                                         </div>
 
-                                        <FontAwesomeIcon icon={faClose} onClick={() => setCourse(prev => ({ ...prev, lstSuggestCourse: (prev.lstSuggestCourse || []).filter(suggest => suggest?.id !== suggestItem?.id) }))} className='text-sm hover:text-red-600 cursor-pointer' />
+                                        <FontAwesomeIcon icon={faClose} onClick={() => setCourse(prev => ({ ...prev, suggestCourses: (prev.suggestCourses || []).filter(suggest => suggest?.id !== suggestItem?.id) }))} className='text-sm hover:text-red-600 cursor-pointer' />
                                     </div>
                                 })}
-                                <input type='text' placeholder='Nhập khóa học rồi nhấn thêm' className='!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40' />
+                                <AutocompleteInput
+                                    onChange={(e) => handleSearchSuggestCourse(e.target.value)}
+                                    classInput={'!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40 w-full'}
+                                    lst={searchSuggestCourse}
+                                    value={inputSuggestCourse}
+                                    setValue={setInputSuggestCourse}
+                                    placeholder={'Nhập khóa học rồi nhấn thêm'}
+                                    getValueItem={(item) => item}
+                                    displayItem={(item) => {
+                                        if (!isObject(item))
+                                            return String(item);
+                                        else
+                                            return item.code + ' - ' + item.name;
+                                    }}
+                                    optionShowList={true}
+                                />
                             </div>
                             <div>
-                                <button className='disabled:opacity-60 disabled:pointer-events-none' disabled={!(hasData(inputTag) && (course?.lstTagName || []).length <= 10 && course?.lstTagName?.find(tagItem => tagItem === inputTag) === undefined)} onClick={handleAddTag}>+ Thêm</button>
+                                <button type="button" className='disabled:opacity-60 disabled:pointer-events-none' disabled={!(isObject(inputSuggestCourse)) || course?.suggestCourses?.find(suggest => suggest.id === inputSuggestCourse.id) !== undefined} onClick={handleAddSuggestCourse}>+ Thêm</button>
                             </div>
                         </div>
                     </div>
@@ -532,20 +680,30 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Tags khóa học</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 py-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg overflow-hidden w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
-                                {course?.lstTagName?.map((tagItem, index) => {
-                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 ms-1 flex flex-row flex-nowrap items-center`}>
+                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                                {course?.tags?.map((tagItem, index) => {
+                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={tagItem}>
                                             <span className='text-nowrap'>{tagItem}</span>
                                         </div>
 
-                                        <FontAwesomeIcon icon={faClose} onClick={() => setCourse(prev => ({ ...prev, lstTagName: (prev.lstTagName || []).filter(tagName => tagName !== tagItem) }))} className='text-sm hover:text-red-600 cursor-pointer' />
+                                        <FontAwesomeIcon icon={faClose} onClick={() => setCourse(prev => ({ ...prev, tags: (prev.tags || []).filter(tagName => tagName !== tagItem) }))} className='text-sm hover:text-red-600 cursor-pointer' />
                                     </div>
                                 })}
-                                <input value={inputTag || ''} onChange={(e) => setInputTag(e.target.value)} type='text' placeholder='Nhập tag rồi nhấn thêm' className='!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40' />
+                                <AutocompleteInput
+                                    onChange={(e) => handleSearchTag(e.target.value)}
+                                    classInput={'!ps-2 !pe-4 outline-none !border-none !shadow-none !h-auto min-w-40 w-full'}
+                                    lst={searchTagRs}
+                                    value={inputTag}
+                                    setValue={setInputTag}
+                                    placeholder={'Nhập tag rồi nhấn thêm'}
+                                    getValueItem={(item) => item}
+                                    displayItem={(item) => item}
+                                    optionShowList={searchTagRs?.length > 0}
+                                />
                             </div>
                             <div>
-                                <button className='disabled:opacity-60 disabled:pointer-events-none' disabled={isAddTagDisabled()} onClick={handleAddTag}>+ Thêm</button>
+                                <button type="button" className='disabled:opacity-60 disabled:pointer-events-none' disabled={isAddTagDisabled()} onClick={handleAddTag}>+ Thêm</button>
                             </div>
                         </div>
                         <span className="hint">Thêm tối đa 10 tags để giúp học viên tìm kiếm dễ hơn</span>
@@ -557,9 +715,9 @@ const CreateOrUpdate = ({ action }) => {
                 <div className="action-left">
                     {action === ACTION.CREATE && <button type="button" onClick={handleSaveTemp} className="btn-secondary" >Lưu nháp</button>}
                 </div>
-                <button onClick={handlerSave} className="btn-primary !bg-gray-900 hover:!bg-gray-800 disabled:cursor-default disabled:!opacity-60 disabled:!bg-gray-900" >Tạo khóa học</button>
+                <button type="button" onClick={handlerSave} disabled={deepEquals(course, lstTemp[keyTemp])} className="btn-primary !bg-gray-900 hover:!bg-gray-800 disabled:cursor-default disabled:!opacity-60 disabled:!bg-gray-900" >{ACTION.CREATE === action ? 'Tạo khóa học' : 'Cập nhật khóa học'}</button>
             </div>
-        </div>
+        </div>}
     </div>
 }
 

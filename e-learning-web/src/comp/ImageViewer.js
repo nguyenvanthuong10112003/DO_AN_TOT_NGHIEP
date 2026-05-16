@@ -41,7 +41,7 @@ const ImageViewer = ({ imageUrl, onClose }) => {
                         onWheel={handleWheel}
                         src={imageUrl}
                         alt="full"
-                        className={`shadow-lg transition-transform duration-200 cursor-zoom-in hover:scale-110 ${scale > 1 ? "cursor-zoom-out" : "cursor-zoom-in"}`}
+                        className={`max-h-[80vh] shadow-lg transition-transform duration-200 cursor-zoom-in hover:scale-110 ${scale > 1 ? "cursor-zoom-out" : "cursor-zoom-in"}`}
                         style={{
                             transform: `scale(${scale})`,
                             

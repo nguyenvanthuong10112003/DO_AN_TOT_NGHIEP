@@ -10,7 +10,7 @@ import { faCircleInfo, faCog, faMars, faSignOutAlt, faVenus } from "@fortawesome
 import {
   Bars3Icon
 } from "@heroicons/react/24/outline";
-import { checkUserWithRoles, handlerLogoutSuccess, hasRole } from "../helper/utils";
+import { checkUserWithRoles, handlerLogoutSuccess, hasRole, isBoolean } from "../helper/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PAGE_LOCATION, USER_ROLE } from "../define/define";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +52,7 @@ function Header({ toggleSideBar, currentUser }) {
             <MenuList className="hidden sm:block p-1 z-20">
               <MenuItem className="text-left text-base px-4 py-2 cursor-default font-semibold flex flex-row items-center space-x-2">
                 <span className="w-full max-w-[200px] text-ellipsis overflow-hidden whitespace-nowrap block">{currentUser?.fullName}</span>
-                {currentUser?.gender instanceof Boolean && <FontAwesomeIcon icon={currentUser.gender === true ? faMars : faVenus} className={`${currentUser.gender === true ? 'text-blue-500' : 'text-pink-500'} ms-2`} />}
+                {isBoolean(currentUser?.gender) && <FontAwesomeIcon icon={currentUser.gender === true ? faMars : faVenus} className={`${currentUser.gender === true ? 'text-blue-500' : 'text-pink-500'} ms-2`} />}
               </MenuItem>
               <hr></hr>
               {hasRole(USER_ROLE.USER) && <MenuItem className="text-left text-base px-4 py-2 outline-none hover:bg-gray-100 space-x-2" onClick={() => navigate(PAGE_LOCATION.USER_INFO)}>

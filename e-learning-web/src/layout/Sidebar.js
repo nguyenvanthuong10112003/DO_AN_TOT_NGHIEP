@@ -24,7 +24,7 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { logout } from "../service/AuthService";
-import { checkUserWithRoles, handlerLogoutSuccess, hasRole } from "../helper/utils";
+import { checkUserWithRoles, handlerLogoutSuccess, hasRole, isBoolean } from "../helper/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleInfo, faCog, faMars, faSignOutAlt, faVenus } from "@fortawesome/free-solid-svg-icons";
 import { PAGE_LOCATION, USER_ROLE } from "../define/define";
@@ -58,7 +58,7 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
   }
 
   return (
-    <Card className={`w-full max-w-full sm:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
+    <Card className={`w-full max-w-full !rounded-none sm:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
       <List className="overflow-auto border-b sm:border-b-0">
         <Accordion
           open={opens.includes(1)}
@@ -203,7 +203,7 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
               <Typography color="blue-gray" className="w-full mx-2 font-semibold text-ellipsis overflow-hidden whitespace-nowrap text-left">
                 {currentUser?.fullName || currentUser?.username || ''}
               </Typography>
-              {currentUser?.gender instanceof Boolean && <span>
+              {isBoolean(currentUser?.gender) && <span>
                 <FontAwesomeIcon icon={currentUser.gender === true ? faMars : faVenus} className={`${currentUser.gender === true ? 'text-blue-500' : 'text-pink-500'} mx-2`} />
               </span>}
             </AccordionHeader>

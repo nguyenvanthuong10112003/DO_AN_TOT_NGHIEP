@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface SectorRepository extends JpaRepository<CourseSector, String> {
-    List<CourseSector> findAllByStatus(Integer status);
+    List<CourseSector> findAllByStatusOrderByNameAsc(Integer status);
     boolean existsByNameAndStatus(String name, Integer status);
     Optional<CourseSector> findByStatusAndId(Integer status, String id);
 }

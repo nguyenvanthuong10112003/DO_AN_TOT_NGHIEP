@@ -74,13 +74,14 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<PhotoResponse> activePhoto(Set<String> ids) {
-        List<Photo> photos = repo.findActiveByIds(new ArrayList<>(ids));
+        List<Photo> photos = repo.findActiveOrHasNoExpireActiveByIds(new ArrayList<>(ids));
         String userId = getCurrentUserId();
         LocalDateTime now = DataUtil.now();
         if (photos == null || photos.isEmpty()) return List.of();
         photos = photos.stream().filter(photo -> userId.equals(photo.getUploadBy())).peek(photo -> {
             photo.setStatus(true);
             photo.setActiveDatetime(now);
+            photo.setIsActive(true);
         }).toList();
         return photoMapper.toListResponse(repo.saveAll(photos));
     }
@@ -100,12 +101,12 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void removePhoto(List<String> ids) {
+    public void removePhoto(List<String> ids, Boolean isSys) {
         List<Photo> photos = repo.findActiveOrHasNoExpireActiveByIds(ids);
         if (photos == null || photos.isEmpty()) return;
         String userId = getCurrentUserId();
         repo.deleteAll(photos.stream()
-            .filter(photo -> userId.equals(photo.getUploadBy()))
+            .filter(photo -> DataUtil.boolValue(isSys) || userId.equals(photo.getUploadBy()))
             .toList());
     }
 
@@ -141,6 +142,9 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private String getCurrentUserId() {
-        return SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            return SecurityContextHolder.getContext().getAuthentication().getName();
+        } catch (Exception ignored) {}
+        return null;
     }
 }

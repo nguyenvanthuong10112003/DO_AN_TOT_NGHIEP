@@ -21,8 +21,12 @@ public class TopicServiceImpl implements TopicService {
     @Autowired
     private TopicMapper topicMapper;
     @Override
-    public List<TopicResponse> findAllBySector(String sectorId) {
-        List<CourseTopic> search = topicRepository.findAllActiveBySectorId(sectorId);
+    public List<TopicResponse> findAll(String sectorId) {
+        List<CourseTopic> search = null;
+        if (!Strings.isBlank(sectorId))
+            search = topicRepository.findAllActiveBySectorId(sectorId);
+        else
+            search = topicRepository.findAllActive();
         return topicMapper.toLstResponse(search);
     }
 

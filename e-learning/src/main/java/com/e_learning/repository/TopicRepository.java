@@ -12,8 +12,8 @@ import java.util.Optional;
 @Repository
 public interface TopicRepository extends JpaRepository<CourseTopic, String> {
     @Query(value = """
-        SELECT t.* FROM course_topic t
-        INNER JOIN course_sector s
+        SELECT t.* FROM topic t
+        INNER JOIN sector s
         ON t.sector_id = s.id AND s.status = 1
         WHERE t.status = 1
             AND t.id = :topicId
@@ -21,13 +21,22 @@ public interface TopicRepository extends JpaRepository<CourseTopic, String> {
     """, nativeQuery = true)
     Optional<CourseTopic> findActiveByTopicIdAndSectorId(@Param("topicId") String topicId, @Param("sectorId") String sectorId);
     @Query(value = """
-        SELECT t.* FROM course_topic t
-        INNER JOIN course_sector s
+        SELECT t.* FROM topic t
+        INNER JOIN sector s
         ON t.sector_id = s.id AND s.status = 1
         WHERE t.status = 1
             AND t.sector_id = :sectorId
+        ORDER BY s.id, t.name ASC
     """, nativeQuery = true)
     List<CourseTopic> findAllActiveBySectorId(@Param("sectorId") String sectorId);
+    @Query(value = """
+        SELECT t.* FROM topic t
+        INNER JOIN sector s
+            ON t.sector_id = s.id AND s.status = 1
+        WHERE t.status = 1
+        ORDER BY s.id, t.name ASC
+    """, nativeQuery = true)
+    List<CourseTopic> findAllActive();
     boolean existsByNameAndSectorIdAndStatus(String name, String sectorId, Integer status);
     Optional<CourseTopic> findByIdAndStatus(String id, Integer status);
 }

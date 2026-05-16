@@ -1,8 +1,5 @@
 import emailRegex from "email-regex";
 import { LOCAL_STORAGE_KEY, USER_ROLE } from "../define/define";
-import { jwtDecode } from 'jwt-decode';
-import { type } from "@testing-library/user-event/dist/type";
-import { hasUnsavedChangesStore } from "../store/HasUnsavedChangesStore";
 
 export const getToken = () => {
     return localStorage.getItem(LOCAL_STORAGE_KEY.ACCESS_TOKEN);
@@ -39,6 +36,7 @@ export const handlerLogoutSuccess = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY.USER_AVATAR);
     localStorage.removeItem(LOCAL_STORAGE_KEY.USER_ROLES);
     localStorage.removeItem(LOCAL_STORAGE_KEY.USER_GENDER);
+    localStorage.removeItem(LOCAL_STORAGE_KEY.COURSE_DATA_TEMP);
 }
 
 export const getUserInfo = () => {
@@ -69,7 +67,7 @@ export const createMessage = (message, type) => {
 }
 
 export const hasData = (data) => {
-    return data !== null && data !== undefined && String(data).trim().length > 0 && Object.keys(data).length > 0;
+    return data !== null && data !== undefined && (String(data).trim().length > 0 || Object.keys(data).length > 0);
 }
 
 export const isEmailValid = (email) => {
@@ -107,7 +105,7 @@ export const getDisplayRole = (role) => {
 
 export const hasRole = (role) => {
     const roles = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY.USER_ROLES));
-    if (roles instanceof Array) return roles.some(r => r === role);
+    if (isArray(roles)) return roles.some(r => r === role);
     return false;
 }
 
@@ -115,45 +113,97 @@ export const getEmail = () => {
     return localStorage.getItem(LOCAL_STORAGE_KEY.USER_EMAIL);
 }
 
-export const isFunctionType = (object) => {
-    return object instanceof Function;
-}
-
-
 export const formatNumber = (val) => {
-    if (!val) return "";
+    if (!hasData(val)) return "";
+
+    val = val.toString();
+
+    val = val.replace(/^0+(?=\d)/, "");
+
     const [intPart, decimalPart] = val.split(".");
+
     return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
         (decimalPart !== undefined ? "." + decimalPart : "");
 };
  
 export const formatDate = (date) => {
-  if (!date) return "";
-  return new Date(date).toLocaleDateString("vi-VN");
+  if (!hasData(date)) return "";
+  return new Date(date).toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).replaceAll('/', '-');
 };
 
 export const formatDateTime = (date) => {
-  if (!date) return "";
-  return new Date(date).toLocaleString("vi-VN");
+  if (!hasData(date)) return "";
+  return new Date(date).toLocaleString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 };
 
 export const deepEquals = (a,b) => {
     if (!hasData(a) && !hasData(b)) return true;
-    else if (a instanceof Array && b instanceof Array) {
+    else if (typeof a != typeof b) return false;
+    else if (isObject(a) && isObject(b)) {
+        const aKeys = new Set(Object.keys(a));
+        const bKeys = new Set(Object.keys(b));
+        const keys = new Set([...aKeys, ...bKeys]);
+        for (const key of keys) {
+            if (!deepEquals(a[key], b[key])) return false;
+        }
+        return true;
+    } 
+    else if (isArray(a) && isArray(b)) {
         for (let i = 0; i < a.length; i++) {
             if (!deepEquals(a[i], b[i])) return false;
         }
         return true;
     }
-    else if (a instanceof Object && b instanceof Object) {
-        const aKeys = Object.keys(a);
-        const bKeys = Object.keys(b);
-        const keys = [...aKeys, ...bKeys.filter(k => aKeys.findIndex(k1 => k1 === k) === -1)]
-        for (let i = 0; i < keys.length; i++) {
-            if (!deepEquals(a[keys[i]], b[keys[i]])) return false;
-        }
-        return true;
-    } 
     else
         return a === b;
+}
+
+export const isAllNumberOrLatin = (str) => {
+    if (!hasData(str)) return true;
+    return str.split("").every(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
+}
+
+export const trimAll = (str) => {
+    if (!hasData(str)) return str;
+    if (isString(str)) return str.trim();
+    if (isArray(str)) return str.map(s => trimAll(s));
+    if (isObject(str)) {
+        const newObj = {};
+        Object.keys(str).forEach(k => {
+            newObj[k] = trimAll(str[k]);
+        })
+        return newObj;
+    }
+    return str;
+}
+
+export const isObject = (v) => {
+    return v instanceof Object || typeof v === typeof {};
+}
+
+export const isString = (v) => {
+    return v instanceof String || typeof v === typeof '  ';
+}
+
+export const isFunction = (v) => {
+    return v instanceof Function || typeof v === typeof (() => { });
+}
+
+export const isArray = (v) => {
+    return Array.isArray(v);
+}
+
+export const isBoolean = (v) => {
+    return v instanceof Boolean || v === true || v === false;
 }

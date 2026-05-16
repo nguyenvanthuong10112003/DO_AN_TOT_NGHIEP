@@ -4,7 +4,7 @@ import { getMindInfo, linkGoogleAccount, updateInfo } from "../../service/UserSe
 import { faArrowRotateLeft, faCheck, faPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { toast } from "react-toastify";
-import { betweenDateByYear, createMessage, displayDate, getDisplayRole, getToken, getUrlGoogleLogin, handlerLoginSuccess, hasData, isEmailValid } from "../../helper/utils";
+import { betweenDateByYear, createMessage, displayDate, getDisplayRole, getToken, getUrlGoogleLogin, handlerLoginSuccess, hasData, isEmailValid, isFunction, isObject } from "../../helper/utils";
 import Field from "../../comp/Field";
 import { LOCAL_STORAGE_KEY, PAGE_LOCATION } from "../../define/define";
 
@@ -69,8 +69,8 @@ const UserInfo = () => {
     };
 
     useEffect(() => {
-        if (setTitle instanceof Function) setTitle('Thông tin cá nhân');
-        if (setControllers instanceof Function) setControllers([{ name: 'Người dùng' }, { name: 'Thông tin cá nhân' }]);
+        if (isFunction(setTitle)) setTitle('Thông tin cá nhân');
+        if (isFunction(setControllers)) setControllers([{ name: 'Người dùng' }, { name: 'Thông tin cá nhân' }]);
         const init = async () => {
             if (!params?.error && params?.code) {
                 await linkGoogleAccount({ ...params, redirect_uri: process.env.REACT_APP_GOOGLE_LINK_REDIRECT_URI })
@@ -113,7 +113,7 @@ const UserInfo = () => {
         const keys = Object.keys(fields);
         if (!keys.includes(field)) return true;
         const fieldInfo = fields[field];
-        if (!hasData(fieldInfo) || (fieldInfo instanceof Object)) return true;
+        if (!hasData(fieldInfo) || isObject(fieldInfo)) return true;
         if (fieldInfo.isRequired && (value || '').trim().length === 0) {
             toast.error(`${fieldInfo.label} bắt buộc nhập!`);
             return false;
@@ -134,7 +134,7 @@ const UserInfo = () => {
                 return false;
             }
         }
-        if (fieldInfo.validate instanceof Function) {
+        if (isFunction(fieldInfo.validate)) {
             return fieldInfo.validate(value);
         }
         return true;
@@ -186,7 +186,7 @@ const UserInfo = () => {
     const handlerSave = () => {
         const errorMsg = Object.keys(fields).filter(key => {
             const field = fields[key];
-            return !((!field.isRequired || hasData(user[field.fieldName])) && (field.validate instanceof Function || field.validate(user[field.fieldName])));
+            return !((!field.isRequired || hasData(user[field.fieldName])) && (isFunction(field.validate) || field.validate(user[field.fieldName])));
         }).map(key => fields[key].label + ' không hợp lệ')
             .join('; ');
         if (hasData(errorMsg)) {

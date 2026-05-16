@@ -1,6 +1,7 @@
 package com.e_learning.service.impl;
 
 import com.e_learning.client.MediaServiceClient;
+import com.e_learning.common.Const;
 import com.e_learning.dto.response.PhotoResponse;
 import com.e_learning.dto.response.ResponseApi;
 import com.e_learning.entity.Photo;
@@ -9,17 +10,17 @@ import com.e_learning.mapper.PhotoMapper;
 import com.e_learning.repository.PhotoRepository;
 import com.e_learning.service.PhotoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +31,10 @@ public class PhotoServiceImpl implements PhotoService {
     private PhotoMapper photoMapper;
     @Autowired
     private PhotoRepository photoRepository;
+    @Value("${rabbitmq.message-key.remove-photo}")
+    private String RABBITMQ_MESSAGE_KEY_REMOVE_PHOTO;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<Photo> uploadPhoto(List<MultipartFile> files, Boolean isTemp, String uploadBy, String accessToken) {
@@ -49,18 +54,18 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     public void removePhoto(List<Photo> photos, String accessToken) {
-        try {
-            mediaServiceClient.removePhoto(createHeader(accessToken), photos.stream().map(Photo::getId).toList());
-        } catch (Exception e) {
-            log.error("Xóa ảnh thất bại: {}", e.getMessage());
-            e.printStackTrace();
-        }
+        List<String> ids = photos.stream().map(Photo::getId).toList();
         photoRepository.deleteAll(photos);
+        rabbitTemplate.convertAndSend(RABBITMQ_MESSAGE_KEY_REMOVE_PHOTO, ids);
     }
 
     @Override
     public List<Photo> active(List<String> ids, String accessToken) {
         if (DataUtil.isNullOrEmpty(ids)) return new ArrayList<>();
+        List<Photo> actives = DataUtil.defaultIfNull(photoRepository.findAllByStatusAndIsActiveAndIdIn(Const.STATUS_ACTIVE, true, ids), new ArrayList<>());
+        if (actives.size() == ids.size()) return actives;
+        Set<String> idActive = actives.stream().map(Photo::getId).collect(Collectors.toSet());
+        ids = ids.stream().filter(id -> !idActive.contains(id)).toList();
         try {
             ResponseEntity<ResponseApi<List<PhotoResponse>>> uploadPhotoResponse =
                 mediaServiceClient.activePhoto(createHeader(accessToken), ids);
@@ -70,13 +75,13 @@ public class PhotoServiceImpl implements PhotoService {
                 DataUtil.isNullOrEmpty(uploadPhotoResponse.getBody().getData()))
                 return new ArrayList<>();
 
-            return photoRepository.saveAll(photoMapper.toLstEntity(uploadPhotoResponse.getBody().getData()).stream()
-                .toList());
+            actives.addAll(photoRepository.saveAll(photoMapper.toLstEntity(uploadPhotoResponse.getBody().getData()).stream()
+                .toList()));
         } catch (Exception e) {
             log.error("Active ảnh thất bại: {}", e.getMessage());
             e.printStackTrace();
         }
-        return new ArrayList<>();
+        return actives;
     }
 
     private Map<String, String> createHeader(String accessToken) {

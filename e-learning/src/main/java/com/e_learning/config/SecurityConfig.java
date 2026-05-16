@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -29,6 +31,7 @@ public class SecurityConfig {
 
     final JwtCustom jwtCustom;
     final JwtAuthEntryPoint jwtAuthEntryPoint;
+    final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -41,15 +44,33 @@ public class SecurityConfig {
                 .anyRequest()
                 .authenticated());
 
-        httpSecurity.oauth2ResourceServer(outh2 ->
-            outh2
-                .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtCustom))
-                .authenticationEntryPoint(jwtAuthEntryPoint));
+        httpSecurity.oauth2ResourceServer(oauth2 ->
+            oauth2
+                .jwt(jwtConfigurer -> jwtConfigurer
+                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                        .decoder(jwtCustom))
+                .authenticationEntryPoint(jwtAuthEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler));
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults());
 
         return httpSecurity.build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter =
+                new JwtGrantedAuthoritiesConverter();
+
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter =
+                new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+        return jwtAuthenticationConverter;
     }
 
     @Bean

@@ -2,6 +2,7 @@ import { faCircleCheck, faCircleExclamation, faCircleInfo, faCircleXmark, faClos
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons/faTriangleExclamation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
+import { isFunction } from "../helper/utils";
 
 
 const ConfirmAlert = ({ attr }) => {
@@ -13,17 +14,17 @@ const ConfirmAlert = ({ attr }) => {
             setError('invalid');
             return;
         }
-        if (attr?.onClose instanceof Function)
+        if (isFunction(attr?.onClose))
             attr?.onClose();
-        if (attr?.onAccept instanceof Function)
+        if (isFunction(attr?.onAccept))
             attr?.onAccept();
     }
     const handlerCancel = () => {
-        if (attr?.onClose instanceof Function)
+        if (isFunction(attr?.onClose))
             attr?.onClose();
     }
     const handlerInputChange = (e) => {
-        if (attr?.inputOnChange instanceof Function)
+        if (isFunction(attr?.inputOnChange))
             attr?.inputOnChange(e);
         setValue(e.target.value)
     }

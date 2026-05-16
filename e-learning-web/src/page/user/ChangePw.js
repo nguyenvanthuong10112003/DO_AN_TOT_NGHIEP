@@ -3,15 +3,15 @@ import { useOutletContext } from "react-router-dom";
 import { LOCAL_STORAGE_KEY, PAGE_LOCATION } from "../../define/define";
 import { toast } from "react-toastify";
 import { createNewPassword, sendVerifyCode } from "../../service/AuthService";
-import { getEmail, hasData } from "../../helper/utils";
+import { getEmail, hasData, isFunction } from "../../helper/utils";
 import { changePassword } from "../../service/UserService";
 
 const ChangePassword = () => {
     const { setControllers, setTitle } = useOutletContext();
     const [timeLeft, setTimeLeft] = useState(0);
     useEffect(() => {
-        if (setTitle instanceof Function) setTitle('Đổi mật khẩu');
-        if (setControllers instanceof Function) setControllers([{ name: 'Người dùng' }, { name: 'Thông tin cá nhân', url: PAGE_LOCATION.USER_INFO }, { name: 'Đổi mật khẩu' }]);
+        if (isFunction(setTitle)) setTitle('Đổi mật khẩu');
+        if (isFunction(setControllers)) setControllers([{ name: 'Người dùng' }, { name: 'Thông tin cá nhân', url: PAGE_LOCATION.USER_INFO }, { name: 'Đổi mật khẩu' }]);
     }, []);
     const [form, setForm] = useState({
         oldPassword: "",

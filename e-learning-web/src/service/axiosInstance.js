@@ -73,7 +73,8 @@ axiosInstance.interceptors.response.use(
     loadingStore.set(false);
     // Nếu lỗi liên quan đến xác thực (ví dụ token hết hạn)
     if (error?.response?.status === 401) {
-      if (String(error?.response?.data?.code) === String(process.env.REACT_APP_AUTHENTICATED_ERROR_CODE)) {
+      const code = String(error?.response?.data?.code);
+      if (code === String(process.env.REACT_APP_AUTHENTICATED_ERROR_CODE)) {
         hasUnsavedChangesStore.set(false);
         const roleAdmin = !!hasRole(USER_ROLE.ADMIN);
         handlerLogoutSuccess();
@@ -81,7 +82,9 @@ axiosInstance.interceptors.response.use(
         sessionStorage.setItem(LOCAL_STORAGE_KEY.BEFORE_URL, document.location.pathname);
         document.location = roleAdmin === true ? PAGE_LOCATION.LOGIN_ADMIN : PAGE_LOCATION.LOGIN;
         return;
-      } else 
+      } else if (code === String(process.env.REACT_APP_AUTHORIZED_ERROR_CODE))
+        toast.error('Bạn không có quyền truy cập chức năng này')
+      else 
         toast.error(error?.response?.data?.message || 'Bạn không có quyền truy cập chức năng này');
     } else if (error.code === 'ECONNABORTED') {
       toast.error('Lỗi kết nối: Server mất quá nhiều thời gian để phản hồi');

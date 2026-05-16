@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @Data
 @Entity
-@Table
+@Table(name = "sector")
 public class CourseSector extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

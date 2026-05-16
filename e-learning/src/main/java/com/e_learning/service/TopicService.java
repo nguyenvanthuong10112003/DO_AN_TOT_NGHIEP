@@ -7,6 +7,6 @@ import com.e_learning.entity.CourseTopic;
 import java.util.List;
 
 public interface TopicService {
-    List<TopicResponse> findAllBySector(String sectorId);
+    List<TopicResponse> findAll(String sectorId);
     CourseTopic create(String topicName, CourseSector sector);
 }

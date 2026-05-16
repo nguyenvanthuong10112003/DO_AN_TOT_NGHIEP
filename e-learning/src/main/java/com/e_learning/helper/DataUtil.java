@@ -3,6 +3,7 @@ package com.e_learning.helper;
 import com.e_learning.entity.Role;
 import com.e_learning.entity.User;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -156,5 +158,13 @@ public final class DataUtil {
             array[j] = temp;
         }
         return new String(array);
+    }
+
+    public static boolean isAllNumberOrLatin(String str) {
+        if (Strings.isBlank(str)) return true;
+        return Arrays.stream(str.split("")).allMatch(c -> {
+            char ch = c.toLowerCase().charAt(0);
+            return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z');
+        });
     }
 }

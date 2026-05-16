@@ -1,13 +1,13 @@
 package com.e_learning.service.impl;
 
 import com.e_learning.common.Const;
-import com.e_learning.dto.request.CourseCertificateRequest;
 import com.e_learning.dto.request.CourseCreateOrUpdateRequest;
+import com.e_learning.dto.response.CourseResponse;
+import com.e_learning.dto.response.PageResponse;
 import com.e_learning.entity.*;
 import com.e_learning.exception.AppException;
 import com.e_learning.exception.ErrorCode;
 import com.e_learning.helper.DataUtil;
-import com.e_learning.helper.ValidatorUtil;
 import com.e_learning.mapper.CourseCertificateMapper;
 import com.e_learning.mapper.CourseMapper;
 import com.e_learning.repository.*;
@@ -15,6 +15,10 @@ import com.e_learning.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,24 +56,30 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
     private TopicService topicService;
 
     @Override
+    public List<CourseResponse> search(String key) {
+        var lst = courseRepository.searchAllActive(key);
+        return courseMapper.toLstResponse(lst);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void createOrUpdateCourse(CourseCreateOrUpdateRequest request) {
+        User user = getCurrentUser();
+        if (!checkUserWithRole(user, Role.ADMIN))
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+
         var isCreate = request.getId() == null;
 
         validate(request);
         List<Course> suggestCourseExisted = null;
-        if (!DataUtil.isNullOrEmpty(request.getLstSuggestCourse())) {
-            suggestCourseExisted = courseRepository.findAllByStatusAndIdIn(Const.STATUS_ACTIVE, request.getLstSuggestCourse());
-            if (suggestCourseExisted.size() != request.getLstSuggestCourse().size()) {
+        if (!DataUtil.isNullOrEmpty(request.getSuggestCourses())) {
+            suggestCourseExisted = courseRepository.findAllByStatusAndIdIn(Const.STATUS_ACTIVE, request.getSuggestCourses());
+            if (suggestCourseExisted.size() != request.getSuggestCourses().size()) {
                 Set<String> courseExisted = suggestCourseExisted.stream().map(Course::getId).collect(Collectors.toSet());
-                List<String> notExists = request.getLstSuggestCourse().stream().filter(courseId -> !courseExisted.contains(courseId)).toList();
+                List<String> notExists = request.getSuggestCourses().stream().filter(courseId -> !courseExisted.contains(courseId)).toList();
                 throw new RuntimeException("Course " + String.join(", ", notExists) + " not exists");
             }
         }
-
-        CourseCertificate certificate = null;
-        if (DataUtil.boolValue(request.getIssuingCertificate()))
-            certificate = courseCertificateService.createOrUpdate(request.getCertificate());
 
         Course course = new Course();
         if (!isCreate)
@@ -107,6 +117,34 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
                 e.printStackTrace();
             }
         }
+        if (newThumbnail == null && !Strings.isBlank(request.getThumbnailId())) {
+            newThumbnail = oldPhoto;
+            oldPhoto = null;
+        }
+
+        List<CourseTag> tags = new ArrayList<>();
+        List<CourseTag> lstRequiredKnowledge = new ArrayList<>();
+        if (!DataUtil.isNullOrEmpty(request.getTags()))
+            tags.addAll(tagService.getOrCreateAll(new HashSet<>(request.getTags())));
+        if (!DataUtil.isNullOrEmpty(request.getLstRequiredKnowledge()))
+            lstRequiredKnowledge.addAll(tagService.getOrCreateAll(new HashSet<>(request.getLstRequiredKnowledge())));
+
+        courseMapper.update(course, request);
+        course.setTopic(topic);
+        course.setThumbnail(newThumbnail);
+        course.setTags(tags);
+        course.setTags(tags);
+        course.setLstRequiredKnowledge(lstRequiredKnowledge);
+        course.setSuggestCourses(suggestCourseExisted);
+
+        if (DataUtil.boolValue(request.getIssuingCertificate())) {
+            CourseCertificate certificate = courseCertificateService.createOrUpdate(course.getCertificate(), request.getCertificate());
+            course.setCertificate(certificate);
+            certificate.setCourse(course);
+        } else
+            course.setCertificate(null);
+
+        courseRepository.save(course);
 
         if (oldPhoto != null) {
             try {
@@ -116,20 +154,6 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
                 e.printStackTrace();
             }
         }
-
-        List<CourseTag> tags = tagService.getOrCreateAll(new HashSet<>(request.getLstTagName()));
-        List<CourseTag> requiredKnowledge = tagService.getOrCreateAll(new HashSet<>(request.getLstRequiredKnowledge()));
-
-        courseMapper.update(course, request);
-        course.setTopic(topic);
-        course.setThumbnail(newThumbnail);
-        course.setTags(tags);
-        course.setCertificate(certificate);
-        course.setTags(tags);
-        course.setLstRequiredKnowledge(requiredKnowledge);
-        course.setSuggestCourses(suggestCourseExisted);
-
-        courseRepository.save(course);
     }
 
     private void validate(CourseCreateOrUpdateRequest request) {
@@ -141,8 +165,8 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
 
         // validate tags
         Set<String> singleTagNameRequest = new HashSet<>();
-        if (!DataUtil.isNullOrEmpty(request.getLstTagName()))
-            for (String tagName : request.getLstTagName())
+        if (!DataUtil.isNullOrEmpty(request.getTags()))
+            for (String tagName : request.getTags())
                 if (singleTagNameRequest.contains(tagName))
                     throw new RuntimeException("Duplicate tag name");
                 else
@@ -159,8 +183,8 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
 
         // validate suggest course
         Set<String> singleSuggestCourse = new HashSet<>();
-        if (!DataUtil.isNullOrEmpty(request.getLstSuggestCourse()))
-            for (String suggestCourse : request.getLstSuggestCourse())
+        if (!DataUtil.isNullOrEmpty(request.getSuggestCourses()))
+            for (String suggestCourse : request.getSuggestCourses())
                 if (singleSuggestCourse.contains(suggestCourse))
                     throw new RuntimeException("Duplicate suggest course");
                 else
@@ -171,6 +195,90 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
                 throw new RuntimeException("Course price is required");
             else if (request.getPrice() < 0)
                 throw new RuntimeException("Course price minimum 0");
+        } else
+            request.setPrice(null);
+
+        if (Strings.isBlank(request.getCode()))
+            throw new RuntimeException("course code is required");
+        else if (!DataUtil.isAllNumberOrLatin(request.getCode()))
+            throw new RuntimeException("course code only has number or latin");
+        else if (request.getCode().length() > 30)
+            throw new RuntimeException("course code max length 30");
+
+        Course existed = courseRepository.getActiveByCodeOrNameAndTopicId(request.getCode(), request.getName(), request.getTopicId());
+        if (existed != null && !DataUtil.equals(request.getId(), existed.getId())) {
+            if (DataUtil.equals(existed.getCode(), request.getCode()))
+                throw new RuntimeException("Course code already existed");
+            else if (DataUtil.equals(existed.getName(), request.getName()))
+                throw new RuntimeException("Course name already existed");
         }
+    }
+
+    @Override
+    public CourseResponse getById(String id) {
+        var course = courseRepository.findByIdAndStatus(id, Const.STATUS_ACTIVE)
+            .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_EXIST));
+        return courseMapper.toResponse(course);
+    }
+
+    @Override
+    public PageResponse<CourseResponse> searchLimit(String key, String sectorId, String topicId, CourseDifficult difficult, CourseLanguage language,  CourseType type, Double priceFrom, Double priceTo, Course.COLUMNS orderBy, Sort.Direction orderMode, Integer pageNumber, Integer pageSize) {
+        pageNumber = pageNumber == null || pageNumber < 1 ? 1 : pageNumber;
+        pageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        orderMode = orderMode == null ? Sort.Direction.ASC : orderMode;
+        orderBy = orderBy == null ? Course.COLUMNS.CREATED_TIME : orderBy;
+
+        Pageable pageable = PageRequest.of(
+            pageNumber - 1,
+            pageSize,
+            Sort.by(orderMode, orderBy.name().toLowerCase())
+        );
+
+        Page<Course> coursePage = courseRepository.searchLimitActive(key, sectorId, topicId,
+                difficult == null ? null : difficult.name(),
+                language == null ? null : language.name(),
+                type == null ? null : type.name(),
+                priceFrom, priceTo, pageable);
+
+        return PageResponse.<CourseResponse>builder()
+            .totalPage(coursePage.getTotalPages())
+            .totalRecord(coursePage.getTotalElements())
+            .pageNumber(pageNumber)
+            .pageSize(pageSize)
+            .list(courseMapper.toLstResponse(coursePage.getContent()))
+            .build();
+    }
+
+    @Override
+    public Long count() {
+        return courseRepository.countActive();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void remove(List<String> ids) {
+        if (DataUtil.isNullOrEmpty(ids)) return;
+        List<Course> courses = courseRepository.findAllByStatusAndIdIn(Const.STATUS_ACTIVE, ids);
+        if (DataUtil.isNullOrEmpty(courses)) return;
+        List<Photo> photos = new ArrayList<>();
+        List<CourseCertificate> certificates = new ArrayList<>();
+        courses.forEach(course -> {
+            course.setTags(null);
+            course.setLstRequiredKnowledge(null);
+            course.setSuggestCourses(null);
+            if (course.getThumbnail() != null) {
+                photos.add(course.getThumbnail());
+                course.setThumbnail(null);
+            }
+            if (course.getCertificate() != null) {
+                certificates.add(course.getCertificate());
+                course.getCertificate().setCourse(null);
+                course.setCertificate(null);
+            }
+            course.setStatus(Const.STATUS_INACTIVE);
+        });
+        courseRepository.saveAll(courses);
+        courseCertificateRepository.deleteAll(certificates);
+        photoService.removePhoto(photos, getAccessToken());
     }
 }

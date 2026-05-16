@@ -15,5 +15,4 @@ import lombok.NoArgsConstructor;
 public class CourseTag extends BaseEntity {
     @Id
     private String name;
-    private String createdBy;
 }

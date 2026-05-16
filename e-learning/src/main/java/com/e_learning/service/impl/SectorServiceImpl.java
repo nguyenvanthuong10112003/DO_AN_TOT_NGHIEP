@@ -22,7 +22,7 @@ public class SectorServiceImpl implements SectorService {
     private SectorMapper sectorMapper;
     @Override
     public List<SectorResponse> getAllSector() {
-        List<CourseSector> sectors = sectorRepository.findAllByStatus(Const.STATUS_ACTIVE);
+        List<CourseSector> sectors = sectorRepository.findAllByStatusOrderByNameAsc(Const.STATUS_ACTIVE);
         return sectorMapper.toLstResponse(sectors);
     }
     @Override

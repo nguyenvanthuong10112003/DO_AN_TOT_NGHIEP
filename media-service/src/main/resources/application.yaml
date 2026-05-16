@@ -8,7 +8,7 @@ spring:
   jackson:
     time-zone: Asia/Ho_Chi_Minh
   datasource:
-    url: jdbc:mariadb://localhost:3306/e-learning
+    url: jdbc:mariadb://localhost:3306/media
     username: root
     password: namdinh1
     driver-class-name: org.mariadb.jdbc.Driver
@@ -24,6 +24,11 @@ spring:
     multipart:
       max-file-size: 500MB
       max-request-size: 500MB
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 file:
   upload-dir: data/uploads/
@@ -39,3 +44,9 @@ apis:
 
 upload-photo:
   valid-duration: 86400 # 24 * 60 * 60 - seconds | 24 hours
+
+rabbitmq:
+  consume:
+    retry-num: 10
+  message-key:
+    remove-photo: RABBITMQ_REMOVE_PHOTO_MESSAGE_KEY

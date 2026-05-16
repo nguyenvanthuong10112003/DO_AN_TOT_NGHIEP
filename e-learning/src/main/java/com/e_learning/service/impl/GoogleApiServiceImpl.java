@@ -21,9 +21,9 @@ import java.text.ParseException;
 @Slf4j
 @Service
 public class GoogleApiServiceImpl implements GoogleApiService {
-    @Value("${links.google-api.client-id}")
+    @Value("${google-api.client-id}")
     private String GOOGLE_CLIENT_ID;
-    @Value("${links.google-api.client-secret}")
+    @Value("${google-api.client-secret}")
     private String GOOGLE_CLIENT_SECRET;
     @Autowired
     private Oauth2GoogleApiClient oauth2GoogleApiClient;

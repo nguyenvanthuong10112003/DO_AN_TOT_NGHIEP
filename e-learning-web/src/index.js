@@ -20,6 +20,9 @@ import Forget from './page/auth/Forget';
 import CourseCreate from './admin/page/course/Create';
 import CourseIndex from './admin/page/course/Index';
 import { ThemeProvider } from '@material-tailwind/react';
+import CourseUpdate from './admin/page/course/Update';
+import CourseDetail from './admin/page/course/Detail';
+import LessonIndex from './admin/page/course/lesson/Index';
 
 const router = createBrowserRouter([
   {
@@ -47,7 +50,10 @@ const router = createBrowserRouter([
                     path: 'course', 
                     children: [
                       { index: true, element: <CourseIndex />},
-                      { path: 'create', element: <CourseCreate /> }
+                      { path: 'create', element: <CourseCreate /> },
+                      { path: 'update', element: <CourseUpdate />},
+                      { path: ':id', element: <CourseDetail /> },
+                      { path: ':id/lesson', element: <LessonIndex /> }
                     ] 
                   }, 
                 ]

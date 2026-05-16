@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 @Entity
-@Table
+@Table(name = "topic")
 public class CourseTopic extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -19,17 +19,12 @@ public class CourseCertificateServiceImpl implements CourseCertificateService {
     @Autowired
     private CourseCertificateMapper courseCertificateMapper;
     @Override
-    public CourseCertificate createOrUpdate(CourseCertificateRequest request) {
+    public CourseCertificate createOrUpdate(CourseCertificate old, CourseCertificateRequest request) {
         if (request == null)
             throw new RuntimeException("certificate content is required");
 
         ValidatorUtil.validate(request);
-        CourseCertificate certificate = null;
-        if (!Strings.isBlank(request.getId()))
-            certificate = courseCertificateRepository.findByIdAndStatus(request.getId(), Const.STATUS_ACTIVE)
-                .orElseThrow(() -> new RuntimeException("certificate not exist"));
-        else
-            certificate = new CourseCertificate();
+        CourseCertificate certificate = old == null ? new CourseCertificate() : old;
         courseCertificateMapper.update(certificate, request);
         return certificate;
     }

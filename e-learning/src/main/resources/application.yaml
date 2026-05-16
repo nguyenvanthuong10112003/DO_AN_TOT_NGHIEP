@@ -30,6 +30,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 client:
   oauth2-google-api:
@@ -50,3 +55,13 @@ verify:
   max-continuous-sends: 5       # số lần gửi liên tục tối đa
   continuous-window: 300        # (seconds) khoảng thời gian tính là "liên tục" (vd: 5 phút)
 
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+
+rabbitmq:
+  message-key:
+    remove-photo: RABBITMQ_REMOVE_PHOTO_MESSAGE_KEY

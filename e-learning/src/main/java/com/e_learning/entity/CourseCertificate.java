@@ -17,8 +17,6 @@ public class CourseCertificate extends BaseEntity {
     private String id;
     @NotBlank
     private String template;
-    private String academyName;
-    private String courseName;
     private String professorName;
     @OneToOne
     @JoinColumn(name = "course_id", nullable = false)
