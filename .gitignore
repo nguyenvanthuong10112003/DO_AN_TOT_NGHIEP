@@ -1,7 +1,9 @@
 google-oauth2.json
 e-learning/target
 e-learning/src/main/resources
+e-learning/.mvn
 media-service/target
 media-service/src/main/resources
 media-service/data/uploads
+media-service/.mvn
 e-learning-web/node_modules
