@@ -7,3 +7,4 @@ media-service/src/main/resources
 media-service/data/uploads
 media-service/.mvn
 e-learning-web/node_modules
+e-learning-web/.vscode
