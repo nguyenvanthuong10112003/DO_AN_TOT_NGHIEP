@@ -37,12 +37,6 @@ public class PhotoController {
             .body(img.getData().getData());
     }
 
-    @PostMapping(value = "/remove")
-    public ResponseApi<?> removePhoto(@RequestBody @NotEmpty List<String> ids) {
-        photoService.removePhoto(ids, false);
-        return ResponseApi.createSuccess();
-    }
-
     @PostMapping(value = "/active")
     public ResponseApi<?> activePhoto(@RequestBody @NotEmpty Set<String> ids) {
         return ResponseApi.createSuccess(photoService.activePhoto(ids));

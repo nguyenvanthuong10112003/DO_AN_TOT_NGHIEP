@@ -1,6 +1,6 @@
 package com.e_learning.mapper;
 
-import com.e_learning.entity.Role;
+import com.e_learning.common.Const.Role;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

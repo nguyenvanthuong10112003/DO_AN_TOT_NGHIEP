@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @FeignClient(value = "${client.media-service.name}",
         name = "${client.media-service.name}",
@@ -16,8 +17,6 @@ import java.util.Map;
 public interface MediaServiceClient {
     @PostMapping(value = "/photos/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ResponseApi<List<PhotoResponse>>> uploadPhoto(@RequestHeader Map<String, String> headers, @RequestPart("files") List<MultipartFile> files, @RequestParam(value = "isTemp") Boolean isTemp);
-    @PostMapping(value = "/photos/remove")
-    ResponseEntity<ResponseApi<?>> removePhoto(@RequestHeader Map<String, String> headers, @RequestBody List<String> ids);
     @PostMapping(value = "/photos/active")
-    ResponseEntity<ResponseApi<List<PhotoResponse>>> activePhoto(@RequestHeader Map<String, String> headers, @RequestBody List<String> ids);
+    ResponseEntity<ResponseApi<List<PhotoResponse>>> activePhoto(@RequestHeader Map<String, String> headers, @RequestBody Set<String> ids);
 }

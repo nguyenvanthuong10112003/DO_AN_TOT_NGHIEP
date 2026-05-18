@@ -67,7 +67,10 @@ export const createMessage = (message, type) => {
 }
 
 export const hasData = (data) => {
-    return data !== null && data !== undefined && (String(data).trim().length > 0 || Object.keys(data).length > 0);
+    if (data === null || data === undefined ) return false;
+    if ((isString(data) && String(data).trim().length > 0) || (isArray(data) && data.length > 0) || (isObject(data) && Object.keys(data).length > 0))
+        return true;
+    return true;
 }
 
 export const isEmailValid = (email) => {

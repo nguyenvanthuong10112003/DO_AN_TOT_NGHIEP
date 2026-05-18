@@ -2,6 +2,8 @@ package com.e_learning.service.impl;
 
 import com.e_learning.client.MediaServiceClient;
 import com.e_learning.common.Const;
+import com.e_learning.dto.request.ConsumeRequest;
+import com.e_learning.dto.request.RemovePhotoRequest;
 import com.e_learning.dto.response.PhotoResponse;
 import com.e_learning.dto.response.ResponseApi;
 import com.e_learning.entity.Photo;
@@ -33,6 +35,8 @@ public class PhotoServiceImpl implements PhotoService {
     private PhotoRepository photoRepository;
     @Value("${rabbitmq.message-key.remove-photo}")
     private String RABBITMQ_MESSAGE_KEY_REMOVE_PHOTO;
+    @Value("${rabbitmq.message-key.active-photo}")
+    private String RABBITMQ_MESSAGE_KEY_ACTIVE_PHOTO;
     @Autowired
     private RabbitTemplate rabbitTemplate;
     @Override
@@ -56,11 +60,11 @@ public class PhotoServiceImpl implements PhotoService {
     public void removePhoto(List<Photo> photos, String accessToken) {
         List<String> ids = photos.stream().map(Photo::getId).toList();
         photoRepository.deleteAll(photos);
-        rabbitTemplate.convertAndSend(RABBITMQ_MESSAGE_KEY_REMOVE_PHOTO, ids);
+        rabbitTemplate.convertAndSend(RABBITMQ_MESSAGE_KEY_REMOVE_PHOTO, new RemovePhotoRequest(ids));
     }
 
     @Override
-    public List<Photo> active(List<String> ids, String accessToken) {
+    public List<Photo> activePhoto(List<String> ids, String accessToken) {
         if (DataUtil.isNullOrEmpty(ids)) return new ArrayList<>();
         List<Photo> actives = DataUtil.defaultIfNull(photoRepository.findAllByStatusAndIsActiveAndIdIn(Const.STATUS_ACTIVE, true, ids), new ArrayList<>());
         if (actives.size() == ids.size()) return actives;
@@ -68,15 +72,15 @@ public class PhotoServiceImpl implements PhotoService {
         ids = ids.stream().filter(id -> !idActive.contains(id)).toList();
         try {
             ResponseEntity<ResponseApi<List<PhotoResponse>>> uploadPhotoResponse =
-                mediaServiceClient.activePhoto(createHeader(accessToken), ids);
+                    mediaServiceClient.activePhoto(createHeader(accessToken), new HashSet<>(ids));
 
             if (!uploadPhotoResponse.getStatusCode().equals(HttpStatus.OK) ||
-                uploadPhotoResponse.getBody() == null ||
-                DataUtil.isNullOrEmpty(uploadPhotoResponse.getBody().getData()))
+                    uploadPhotoResponse.getBody() == null ||
+                    DataUtil.isNullOrEmpty(uploadPhotoResponse.getBody().getData()))
                 return new ArrayList<>();
 
             actives.addAll(photoRepository.saveAll(photoMapper.toLstEntity(uploadPhotoResponse.getBody().getData()).stream()
-                .toList()));
+                    .toList()));
         } catch (Exception e) {
             log.error("Active ảnh thất bại: {}", e.getMessage());
             e.printStackTrace();

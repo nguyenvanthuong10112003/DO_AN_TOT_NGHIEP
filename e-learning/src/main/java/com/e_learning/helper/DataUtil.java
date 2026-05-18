@@ -1,13 +1,11 @@
 package com.e_learning.helper;
 
-import com.e_learning.entity.Role;
-import com.e_learning.entity.User;
+import com.e_learning.common.Const.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -18,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.regex.Pattern;
 
 @Slf4j

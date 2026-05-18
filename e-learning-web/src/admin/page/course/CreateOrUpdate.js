@@ -449,6 +449,7 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="flex flex-col mt-2 gap-1">
                         {Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a)).map((temp, index) => {
                             const courseTemp = lstTemp[temp];
+                            console.log(formatDateTime(new Date(Number(temp))))
                             return <React.Fragment key={index}>
                                 {index > 0 && <hr />}
                                 <button onClick={() => handleChangeTemp(temp)} type="button" className={`py-2 px-4 text-start hover:bg-gray-100 flex flex-row items-center justify-between rounded-lg ${keyTemp === temp && '!bg-[var(--color-background-secondary)]'}`}>
@@ -609,7 +610,7 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Từ khóa</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 py-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
                                 {course?.lstRequiredKnowledge?.map((inputKeyWord, index) => {
                                     return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 ms-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={inputKeyWord}>

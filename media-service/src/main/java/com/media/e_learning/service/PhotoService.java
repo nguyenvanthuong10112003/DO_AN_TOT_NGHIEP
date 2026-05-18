@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 public interface PhotoService {
-    void removePhoto(List<String> ids, Boolean isSys);
-    List<PhotoResponse> copyPhoto(List<String> lstPhotoId);
+    void removePhoto(Set<String> ids);
+    List<PhotoResponse> copyPhoto(Set<String> lstPhotoId);
     List<PhotoResponse> uploadPhoto(List<MultipartFile> files, Boolean isTemp);
     Photo loadPhoto(String photoId);
     List<PhotoResponse> activePhoto(Set<String> ids);

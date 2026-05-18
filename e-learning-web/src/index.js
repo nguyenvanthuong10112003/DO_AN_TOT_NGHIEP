@@ -52,8 +52,8 @@ const router = createBrowserRouter([
                       { index: true, element: <CourseIndex />},
                       { path: 'create', element: <CourseCreate /> },
                       { path: 'update', element: <CourseUpdate />},
-                      { path: ':id', element: <CourseDetail /> },
-                      { path: ':id/lesson', element: <LessonIndex /> }
+                      { path: ':courseId', element: <CourseDetail /> },
+                      { path: ':courseId/lesson', element: <LessonIndex /> }
                     ] 
                   }, 
                 ]

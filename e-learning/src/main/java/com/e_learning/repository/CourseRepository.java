@@ -1,9 +1,6 @@
 package com.e_learning.repository;
 
 import com.e_learning.entity.Course;
-import com.e_learning.entity.CourseDifficult;
-import com.e_learning.entity.CourseLanguage;
-import com.e_learning.entity.CourseType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

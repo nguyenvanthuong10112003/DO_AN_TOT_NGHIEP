@@ -12,7 +12,3 @@ export const uploadTempPhoto = async (photoFiles) => {
         }
     })
 }
-
-export const removePhoto = async (ids) => {
-    return await axiosInstance.post(`${process.env.REACT_APP_API_PHOTO_SERVICE_BASE_URL}/photos/remove`, ids)
-}

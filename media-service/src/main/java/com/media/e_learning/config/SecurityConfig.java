@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Configuration
 public class SecurityConfig {
-    final String[] PUBLIC_ACTIONS = {"/photos/{id}", "/videos/view"};
+    final String[] PUBLIC_ACTIONS = {"/photos/{id}", "/videos/play", "/videos/{id}/thumbnail"};
     final String[] ADMIN_ACTION = {"/videos/upload"};
     final JwtFilter jwtFilter;
     final JwtAuthEntryPoint jwtAuthEntryPoint;
@@ -44,6 +45,10 @@ public class SecurityConfig {
         httpSecurity
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults());
+
+        httpSecurity.headers(headers -> headers
+            .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+        );
         return httpSecurity.build();
     }
 

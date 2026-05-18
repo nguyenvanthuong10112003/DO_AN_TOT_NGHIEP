@@ -1,7 +1,7 @@
 package com.e_learning.service;
 
 import com.e_learning.common.Const;
-import com.e_learning.entity.Role;
+import com.e_learning.common.Const.*;
 import com.e_learning.entity.User;
 import com.e_learning.exception.AppException;
 import com.e_learning.exception.ErrorCode;

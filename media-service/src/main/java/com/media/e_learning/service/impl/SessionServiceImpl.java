@@ -4,7 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.media.e_learning.dto.SessionCreateRequest;
 import com.media.e_learning.dto.SessionResponse;
+import com.media.e_learning.exception.AppException;
+import com.media.e_learning.exception.ErrorCode;
 import com.media.e_learning.helper.DataUtil;
+import com.media.e_learning.repository.VideoRepository;
 import com.media.e_learning.service.RedisService;
 import com.media.e_learning.service.SessionService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +33,19 @@ public class SessionServiceImpl implements SessionService {
     private Long timeSave;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private VideoRepository videoRepository;
 
     @Override
     public SessionResponse createSession(SessionCreateRequest request) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        if (Strings.isBlank(userId)) throw new RuntimeException("Authorization");
+        if (Strings.isBlank(userId)) throw new AppException(ErrorCode.UNAUTHENTICATED);
         if (request == null) throw new RuntimeException("Request body is required");
         if (Strings.isBlank(request.getVideoId())) throw new RuntimeException("Video id is required");
+
+        if (videoRepository.findActiveByIdOrHasNoExpireActive(request.getVideoId()).isEmpty())
+            throw new RuntimeException("Video not exist");
 
         List<SessionResponse> sessionsOfUser = getAllByUser(userId);
         if (sessionsOfUser == null) sessionsOfUser = new ArrayList<>();
@@ -65,7 +73,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public List<SessionResponse> getAllByUser(String userId) {
-        return redisService.get(generateRedisKey(userId), new TypeReference<List<SessionResponse>>() {});
+        return redisService.get(generateRedisKey(userId), new TypeReference<>() {});
     }
 
     private String generateRedisKey(String userId) {

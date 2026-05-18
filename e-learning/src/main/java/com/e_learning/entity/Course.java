@@ -1,5 +1,6 @@
 package com.e_learning.entity;
 
+import com.e_learning.common.Const;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,7 +45,7 @@ public class Course extends BaseEntity {
     // Ngôn ngữ
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CourseLanguage language;
+    private Const.CourseLanguage language;
 
     // Các khóa học gợi ý trước khi học khóa học này
     @ManyToMany(fetch = FetchType.LAZY)
@@ -66,12 +67,12 @@ public class Course extends BaseEntity {
     // Độ khó
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CourseDifficult difficult;
+    private Const.CourseDifficult difficult;
 
     // Loại khóa học | FREE hoặc PAID
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CourseType type;
+    private Const.CourseType type;
 
     // khóa học thuộc chủ đề, lĩnh vực
     @ManyToOne

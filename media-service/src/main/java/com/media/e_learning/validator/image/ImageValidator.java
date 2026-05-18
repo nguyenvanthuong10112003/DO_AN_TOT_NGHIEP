@@ -30,14 +30,17 @@ public class ImageValidator implements ConstraintValidator<ImageConstraint, Mult
         if (file == null || file.isEmpty())
             return true;
 
+        // Kiểm tra kích thước được phép tải lên
         if (file.getSize() > MAX_SIZE_BYTES)
             return buildViolation(context, "Image must not exceed 20MB");
 
+        // Kiểm tra định dạng ảnh hợp lệ
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType))
             return buildViolation(context, "Unsupported image type");
 
         try {
+            // Kiểm tra các byte đầu tiên có đúng với định dạng hay không
             byte[] header = file.getInputStream().readNBytes(4);
             byte[] magic  = MAGIC_BYTES.get(contentType);
             if (magic != null) {

@@ -1,10 +1,8 @@
 package com.e_learning.controller;
 
+import com.e_learning.common.Const;
 import com.e_learning.dto.response.ResponseApi;
 import com.e_learning.entity.Course;
-import com.e_learning.entity.CourseDifficult;
-import com.e_learning.entity.CourseLanguage;
-import com.e_learning.entity.CourseType;
 import com.e_learning.service.CourseService;
 import com.e_learning.service.SectorService;
 import com.e_learning.service.TagService;
@@ -50,9 +48,9 @@ public class CourseController extends BaseController {
             @RequestParam(required = false) String key,
             @RequestParam(required = false) String sectorId,
             @RequestParam(required = false) String topicId,
-            @RequestParam(required = false) CourseDifficult difficult,
-            @RequestParam(required = false) CourseLanguage language,
-            @RequestParam(required = false) CourseType type,
+            @RequestParam(required = false) Const.CourseDifficult difficult,
+            @RequestParam(required = false) Const.CourseLanguage language,
+            @RequestParam(required = false) Const.CourseType type,
             @RequestParam(required = false) Double priceFrom,
             @RequestParam(required = false) Double priceTo,
             @RequestParam(defaultValue = "10") Integer pageSize,

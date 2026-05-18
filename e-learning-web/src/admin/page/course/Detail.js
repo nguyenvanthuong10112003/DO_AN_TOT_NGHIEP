@@ -14,15 +14,16 @@ const CourseDetail = () => {
         setTitle,
         setIsMainFull,
         setControllers,
-        openConfirmAlert
+        openConfirmAlert,
+        setBgColor
     } = useOutletContext();
-    const { id } = useParams();
+    const { courseId } = useParams();
     const [course, setCourse] = useState({})
     useEffect(() => {
         setTitle?.('Chi tiết khóa học')
-        //if (isFunction(setControllers)) setControllers([{name: 'Quản lý khóa học', url: PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE}, {name: 'Chi tiết khóa học'}])
-        setIsMainFull?.(true);
-        getCourseById(id)
+        setBgColor?.('bg-white')
+        setIsMainFull?.(true)
+        getCourseById(courseId)
             .then(res => {
                 setCourse(res.data.data)
             })
@@ -30,7 +31,7 @@ const CourseDetail = () => {
         return () => {
             handleReset?.();
         }
-    }, [id])
+    }, [courseId])
     const handleRemoveCourse = (ids) => {
         if (!hasData(ids) || !isArray(ids)) return;
         openConfirmAlert({
@@ -49,7 +50,7 @@ const CourseDetail = () => {
     }
     return (<div id="detail-pg" className="bg-white p-4">
         <div className="det-header !items-start">
-            <button className="back-btn" onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
+            <button type='button' className="back-btn" onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
                 <FontAwesomeIcon icon={faArrowLeft} />Danh sách
             </button>
             <div className="det-title-block">
@@ -57,8 +58,8 @@ const CourseDetail = () => {
                 <div className="det-breadcrumb capitalize">{course.description}</div>
             </div>
             <div className="det-actions">
-                <button className="btn-edit" onClick={_ => navigate(`${PAGE_LOCATION.ADMIN_UPDATE_COURSE}?id=${course?.id}`)} ><FontAwesomeIcon icon={faEdit} />Chỉnh sửa</button>
-                <button className="btn-danger-sm" onClick={_ => handleRemoveCourse([course?.id])}><FontAwesomeIcon icon={faTrash} /></button>
+                <button type='button' className="btn-edit" onClick={_ => navigate(`${PAGE_LOCATION.ADMIN_UPDATE_COURSE}?id=${course?.id}`)} ><FontAwesomeIcon icon={faEdit} />Chỉnh sửa</button>
+                <button type='button' className="btn-danger-sm" onClick={_ => handleRemoveCourse([course?.id])}><FontAwesomeIcon icon={faTrash} /></button>
             </div>
         </div>
         {hasData(course.id) && <div id="det-content" className='!gap-4 space-y-4'>
@@ -92,7 +93,7 @@ const CourseDetail = () => {
                     <div className="info-row"><span className="info-key">Giá</span><span className="info-val"><span style={{ fontWeight: '500' }}>{course.type === 'FREE' ? COURSE_TYPE[course.type] : `${formatNumber(course.price)}đ`}</span></span></div>
                     <div className="info-row"><span className="info-key">Chứng chỉ</span><span className="info-val">{course.issuingCertificate === true ? 'Có' : 'Không'}</span></div>
                     <div className="info-row"><span className="info-key">Ngày tạo</span><span className="info-val">{formatDate(course.createdTime)}</span></div>
-                    <div className="info-row !flex-row det-hero-tags !pb-0"><span className="w-full">Kiến thức cần có </span><div className='det-hero-tags'>{course.lstRequiredKnowledge?.map((tag, index) => <span key={index} className="tag-pill">{tag}</span>)}</div></div>
+                    {hasData(course.lstRequiredKnowledge) && <div className="info-row !flex-row det-hero-tags !pb-0"><span className="w-full">Kiến thức cần có </span><div className='det-hero-tags'>{course.lstRequiredKnowledge?.map((tag, index) => <span key={index} className="tag-pill">{tag}</span>)}</div></div>}
                 </div>
                 <div className="det-card">
                     <div className="det-card-title relative"><FontAwesomeIcon icon={faBookOpen} style={{ fontSize: '14px' }} aria-hidden="true" />
@@ -135,9 +136,10 @@ const CourseDetail = () => {
                             <div className='w-full h-32'>
                                 <img className='w-full max-w-full max-h-full object-cover' src={suggest.thumbnail || "/img/course-img-default.jpg"} alt='course-image' />
                             </div>
-                            <div className='p-2 text-ellipsis overflow-hidden text-nowrap space-y-2'>
+                            <div className='p-2 text-ellipsis overflow-hidden text-nowrap '>
                                 <p className='text-sm text-gray-700 text-ellipsis overflow-hidden uppercase'>{suggest.name}</p>
                                 <p className='text-xs text-gray-500 text-ellipsis overflow-hidden capitalize'>{suggest.description}</p>
+                                <span className={`diff-badge d-${String(suggest.difficult).toLowerCase()}`}>{DIFFICULT[suggest.difficult]}</span>
                             </div>
                         </div>)}
                     </div>

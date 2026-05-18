@@ -14,8 +14,13 @@ import java.io.InputStream;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VideoResponse {
-    private String name;
+    private String id;
     private String url;
+    private Boolean isActive;
+    private Integer width;
+    private Integer height;
+    private Double duration;
+    private String quality;
     @JsonIgnore
     private HttpHeaders headers;
     @JsonIgnore

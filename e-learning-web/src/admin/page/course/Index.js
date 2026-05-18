@@ -73,6 +73,7 @@ const CourseIndex = () => {
     useEffect(() => {
         search();
     }, [params]);
+    const getDiffClass = () => {}
     const search = () => {
         searchCourseLimit({ ...params, sectorId: params.sectorSelected?.id, topicId: params.topicSelected?.id, ...(PRICE_RANGE[params.priceRange] || {}) }).then(res => {
             const response = res.data.data;

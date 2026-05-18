@@ -1,6 +1,6 @@
 package com.e_learning.config;
 
-import com.e_learning.entity.Role;
+import com.e_learning.common.Const.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

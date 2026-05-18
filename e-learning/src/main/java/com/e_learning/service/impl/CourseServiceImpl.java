@@ -1,5 +1,6 @@
 package com.e_learning.service.impl;
 
+import com.e_learning.common.Const.*;
 import com.e_learning.common.Const;
 import com.e_learning.dto.request.CourseCreateOrUpdateRequest;
 import com.e_learning.dto.response.CourseResponse;
@@ -111,7 +112,7 @@ public class CourseServiceImpl extends BaseAuthedService implements CourseServic
         Photo oldPhoto = course.getThumbnail();
         if (isCreate || oldPhoto == null || !DataUtil.equals(request.getThumbnailId(), oldPhoto.getId())) {
             try {
-                newThumbnail = photoService.active(List.of(request.getThumbnailId()), accessToken).get(0);
+                newThumbnail = photoService.activePhoto(List.of(request.getThumbnailId()), accessToken).get(0);
             } catch (Exception e) {
                 log.error("Error active photo: {}", e.getMessage());
                 e.printStackTrace();

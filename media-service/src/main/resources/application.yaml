@@ -35,7 +35,7 @@ file:
 
 redis:
   session:
-    time-save: 3600 # seconds | 1 hour
+    time-save: 60 # seconds | 1 hour
 
 apis:
   e-learning-service:
@@ -49,4 +49,6 @@ rabbitmq:
   consume:
     retry-num: 10
   message-key:
+    active-photo: RABBITMQ_ACTIVE_PHOTO_MESSAGE_KEY
     remove-photo: RABBITMQ_REMOVE_PHOTO_MESSAGE_KEY
+    encode-video: RABBITMQ_ENCODE_VIDEO_MESSAGE_KEY

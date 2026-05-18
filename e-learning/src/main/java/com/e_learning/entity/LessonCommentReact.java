@@ -2,21 +2,24 @@ package com.e_learning.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
+@Builder
+@Table(name = "react")
 @Entity
-@Table(name = "content")
-public class Content extends BaseEntity {
+public class LessonCommentReact extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private ContentType type;
-    private String text;
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "photo_id")
-    private Photo photo;
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private User sender;
+    @ManyToOne
+    @JoinColumn(name = "comment_id")
+    private LessonComment comment;
 }

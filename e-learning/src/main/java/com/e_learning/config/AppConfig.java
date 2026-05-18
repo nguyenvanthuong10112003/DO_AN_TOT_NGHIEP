@@ -1,7 +1,7 @@
 package com.e_learning.config;
 
 import com.e_learning.common.Const;
-import com.e_learning.entity.Role;
+import com.e_learning.common.Const.*;
 import com.e_learning.entity.User;
 import com.e_learning.repository.UserRepository;
 import jakarta.annotation.PostConstruct;

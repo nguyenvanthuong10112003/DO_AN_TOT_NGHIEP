@@ -64,4 +64,5 @@ logging:
 
 rabbitmq:
   message-key:
+    active-photo: RABBITMQ_ACTIVE_PHOTO_MESSAGE_KEY
     remove-photo: RABBITMQ_REMOVE_PHOTO_MESSAGE_KEY

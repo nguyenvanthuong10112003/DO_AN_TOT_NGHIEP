@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table
+@Table(schema = "e-learning-log", catalog = "e-learning-log")
 public class RabbitMQLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,5 +23,6 @@ public class RabbitMQLog {
     private Long retryNum;
     @Column(updatable = false)
     private LocalDateTime createdTime;
+    @Column(columnDefinition = "TEXT")
     private String errorMessage;
 }

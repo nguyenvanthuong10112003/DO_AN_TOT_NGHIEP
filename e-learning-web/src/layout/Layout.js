@@ -17,6 +17,7 @@ const Layout = () => {
     const [currentUser, setCurrentUser] = useState();
     const navigate = useNavigate();
     const [isMainFull, setIsMainFull] = useState(false);
+    const [bgColor, setBgColor] = useState('bg-gray-50');
 
     const onConfirmAlertCloseDefault = () => {
         setConfirmAlertAttr(prev => ({ ...prev, isOpen: false }))
@@ -81,9 +82,9 @@ const Layout = () => {
         <div className="">
             <Header currentUser={currentUser} toggleSideBar={toggleSideBar} />
             <Sidebar currentUser={currentUser} isOpenSideBar={isOpenSideBar} />
-            <div className={`min-h-screen pt-16 bg-gray-50 w-full ${isOpenSideBar ? 'sm:pl-[20rem]' : ''} transition-all duration-500 ease-in-out flex flex-col justify-between`}>
+            <div className={`min-h-screen pt-16 ${bgColor || 'bg-gray-50'} w-full ${isOpenSideBar ? 'sm:pl-[20rem]' : ''} transition-all duration-500 ease-in-out flex flex-col justify-between`}>
                 <div className={`flex-1 ${isMainFull !== true && `p-2 ${controllers && isArray(controllers) && controllers.length > 0 && 'pb-6'}`}`}>
-                    {controllers && isArray(controllers) && controllers.length > 0 && <div className="flex flex-row">
+                    {controllers && isArray(controllers) && controllers.length > 0 && <div className={`flex flex-row ${isMainFull && 'p-2'}`}>
                         {controllers.map((controller, index) => {
                             return <li key={index} className="list-none text-sm">
                                 {index !== 0 && <span className="mx-2 text-gray-500">{'>'}</span>}
@@ -95,7 +96,7 @@ const Layout = () => {
                         })}
                     </div>}
                     <div>
-                        <Outlet context={{ setControllers, setTitle, openConfirmAlert, setCurrentUser, setIsMainFull, handleReset}} />
+                        <Outlet context={{ setControllers, setTitle, openConfirmAlert, setCurrentUser, setIsMainFull, handleReset, setBgColor}} />
                     </div>
                 </div>
                 <Footer currentUser={currentUser} />

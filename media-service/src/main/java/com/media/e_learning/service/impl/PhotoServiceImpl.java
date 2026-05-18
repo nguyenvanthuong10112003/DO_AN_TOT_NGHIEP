@@ -53,7 +53,6 @@ public class PhotoServiceImpl implements PhotoService {
                     .waitExpireAt(DataUtil.boolValue(isTemp) ? now.plusSeconds(uploadValidDuration) : null)
                     .activeDatetime(DataUtil.boolValue(isTemp) ? null : now)
                     .isActive(!DataUtil.boolValue(isTemp))
-
                     .data(PhotoData.builder()
                         .fileName(file.getOriginalFilename())
                         .contentType("image/png")
@@ -75,7 +74,7 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(rollbackFor = Exception.class)
     public List<PhotoResponse> activePhoto(Set<String> ids) {
         List<Photo> photos = repo.findActiveOrHasNoExpireActiveByIds(new ArrayList<>(ids));
-        String userId = getCurrentUserId();
+        String userId = requiredCurrentUserId();
         LocalDateTime now = DataUtil.now();
         if (photos == null || photos.isEmpty()) return List.of();
         photos = photos.stream().filter(photo -> userId.equals(photo.getUploadBy())).peek(photo -> {
@@ -101,19 +100,16 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void removePhoto(List<String> ids, Boolean isSys) {
-        List<Photo> photos = repo.findActiveOrHasNoExpireActiveByIds(ids);
+    public void removePhoto(Set<String> ids) {
+        List<Photo> photos = repo.findActiveOrHasNoExpireActiveByIds(new ArrayList<>(ids));
         if (photos == null || photos.isEmpty()) return;
-        String userId = getCurrentUserId();
-        repo.deleteAll(photos.stream()
-            .filter(photo -> DataUtil.boolValue(isSys) || userId.equals(photo.getUploadBy()))
-            .toList());
+        repo.deleteAll(photos);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<PhotoResponse> copyPhoto(List<String> lstPhotoId) {
-        List<Photo> photos = repo.findActiveByIds(lstPhotoId);
+    public List<PhotoResponse> copyPhoto(Set<String> lstPhotoId) {
+        List<Photo> photos = repo.findActiveByIds(new ArrayList<>(lstPhotoId));
         if (photos == null || photos.isEmpty()) return List.of();
         String userId = getCurrentUserId();
         LocalDateTime now = DataUtil.now();
@@ -146,5 +142,9 @@ public class PhotoServiceImpl implements PhotoService {
             return SecurityContextHolder.getContext().getAuthentication().getName();
         } catch (Exception ignored) {}
         return null;
+    }
+
+    private String requiredCurrentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

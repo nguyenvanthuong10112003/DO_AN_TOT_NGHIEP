@@ -18,6 +18,6 @@ public class CourseTopic extends BaseEntity {
     private String id;
     private String name;
     @ManyToOne
-    @JoinColumn(name = "sector_id", nullable = false)
+    @JoinColumn(name = "sector_id")
     private CourseSector sector;
 }
