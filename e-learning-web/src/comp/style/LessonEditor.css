@@ -1,0 +1,113 @@
+.tiptap-editor .ProseMirror * {
+  @apply text-base
+}
+
+.tiptap-editor .ProseMirror {
+  @apply outline-none min-h-[400px] text-base leading-relaxed;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-zinc-400 pointer-events-none float-left h-0;
+}
+
+/* Heading styles */
+.tiptap-editor .ProseMirror h1 {
+  @apply font-serif text-3xl font-normal;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  @apply font-serif text-2xl font-normal;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  @apply font-serif text-xl font-normal;
+}
+
+/* Paragraph */
+.tiptap-editor .ProseMirror p {}
+
+/* Blockquote */
+.tiptap-editor .ProseMirror blockquote {
+  @apply border-l-4 border-gray-700 bg-gray-50 p-2 my-2 italic rounded-r-md;
+}
+
+.tiptap-editor .ProseMirror blockquote p {
+  @apply mb-0;
+}
+
+/* Lists */
+.tiptap-editor .ProseMirror ul {
+  @apply list-disc pl-6 mb-3 space-y-1;
+}
+
+.tiptap-editor .ProseMirror ol {
+  @apply list-decimal pl-6 mb-3 space-y-1;
+}
+
+/* Code */
+.tiptap-editor .ProseMirror code {
+  @apply bg-zinc-100 px-1.5 py-0.5 rounded text-base font-mono;
+}
+
+.tiptap-editor .ProseMirror pre {
+  @apply bg-zinc-900 text-zinc-100 p-4 rounded-lg my-4 overflow-x-auto;
+}
+
+.tiptap-editor .ProseMirror pre code {
+  @apply bg-transparent text-inherit p-0;
+}
+
+/* Image */
+.tiptap-editor .ProseMirror img {
+  @apply max-w-full rounded-lg my-3 ring-1 ring-gray-300;
+}
+
+.tiptap-editor .ProseMirror img.ProseMirror-selectednode {
+  @apply ring-1 !ring-gray-500;
+}
+
+.tiptap-editor .ProseMirror img,
+.tiptap-editor .ProseMirror img.text-left {
+  display: block;
+}
+
+.tiptap-editor .ProseMirror img.text-center {
+  margin: 0 auto;
+}
+
+.tiptap-editor .ProseMirror img.text-right {
+  margin-left: auto;
+}
+
+/* Link */
+.tiptap-editor .ProseMirror a {
+  @apply text-blue-700 underline cursor-pointer;
+}
+
+.tiptap-editor .ProseMirror a:hover {
+  @apply text-blue-500
+}
+
+/* Highlight */
+.tiptap-editor .ProseMirror mark {
+  @apply bg-yellow-200 px-0.5 rounded-sm;
+}
+
+/* Horizontal rule */
+.tiptap-editor .ProseMirror hr {
+  @apply border-t border-zinc-200 my-6;
+}
+
+/* Text align */
+.tiptap-editor .ProseMirror [style*="text-align: center"] {
+  text-align: center;
+}
+
+.tiptap-editor .ProseMirror [style*="text-align: right"] {
+  text-align: right;
+}
+
+.tiptap-editor .ProseMirror [style*="text-align: justify"] {
+  text-align: justify;
+}

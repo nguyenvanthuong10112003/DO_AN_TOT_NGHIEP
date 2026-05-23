@@ -20,7 +20,6 @@ public class Video {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String fileName;
-    private String thumbnailFileName;
     private String uploadBy;
     private LocalDateTime uploadDatetime;
     private Boolean status;

@@ -58,7 +58,7 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
   }
 
   return (
-    <Card className={`w-full max-w-full !rounded-none sm:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
+    <Card className={`w-full max-w-full !rounded-none md:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
       <List className="overflow-auto border-b sm:border-b-0">
         <Accordion
           open={opens.includes(1)}
@@ -196,7 +196,7 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
           }
         >
           <ListItem className="p-0 sm:hidden" selected={opens.includes(4)}>
-            <AccordionHeader onClick={(e) => {e.stopPropagation(); opens.includes(4) ? handlerClose(4) : handleOpen(4)}} className="border-b-0 p-3 hover:bg-gray-100 rounded-lg">
+            <AccordionHeader onClick={(e) => { e.stopPropagation(); opens.includes(4) ? handlerClose(4) : handleOpen(4) }} className={`border-b-0 p-3 hover:bg-gray-100 `}>
               <ListItemPrefix>
                 <img className="max-w-none max-h-none w-8 h-8 object-cover rounded-full border border-gray-300" alt="avatar-user" src={currentUser?.avatar || '/img/user.png'} />
               </ListItemPrefix>
@@ -208,21 +208,25 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
               </span>}
             </AccordionHeader>
           </ListItem>
-          <AccordionBody className={`hidden ${opens.includes(4) && 'block'} sm:hidden`}>
+          {opens.includes(4) && <hr className="mt-2"></hr>}
+          <AccordionBody className={`hidden ${opens.includes(4) && 'block'} sm:hidden p-0 pt-1`}>
             <List className="p-0">
-              {hasRole(USER_ROLE.USER) && <ListItem className="hover:bg-gray-100 border-y rounded-none" onClick={() => navigate(PAGE_LOCATION.USER_INFO)}>
-                <FontAwesomeIcon icon={faCircleInfo} /> 
-                <span className="ml-2">
-                  Thông tin cá nhân
-                </span>
-              </ListItem>}
-              <ListItem className="hover:bg-gray-100 border-b rounded-none">
+              {hasRole(USER_ROLE.USER) && <> <ListItem className="hover:bg-gray-100 border-y" onClick={() => navigate(PAGE_LOCATION.USER_INFO)}>
+                  <FontAwesomeIcon icon={faCircleInfo} />
+                  <span className="ml-2">
+                    Thông tin cá nhân
+                  </span>
+                </ListItem>
+                <hr></hr>
+              </>}
+              <ListItem className="hover:bg-gray-100 ">
                 <FontAwesomeIcon icon={faCog} />
                 <span className="ml-2">
                   Cài đặt
                 </span>
               </ListItem>
-              <ListItem className="hover:bg-gray-100 rounded-none" onClick={handlerLogout}>
+              <hr></hr>
+              <ListItem className="hover:bg-gray-100 " onClick={handlerLogout}>
                 <FontAwesomeIcon icon={faSignOutAlt} />
                 <span className="ml-2">
                   Đăng xuất
@@ -231,11 +235,11 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
             </List>
           </AccordionBody>
         </Accordion>
-        <hr className="my-2"/>
+        <hr className="my-2" />
         <div className="flex-row flex mx-4">
           <img src="/logo64.png" alt="brand" />
           <div className="ms-4 font-bold font-sans flex flex-col items-start justify-center">
-            <p className="" >{checkUserWithRoles([USER_ROLE.ADMIN]) ? process.env.REACT_APP_MANAGEMENT_NAME : process.env.REACT_APP_NAME}</p>
+            <p className="text-base" >{checkUserWithRoles([USER_ROLE.ADMIN]) ? process.env.REACT_APP_MANAGEMENT_NAME : process.env.REACT_APP_NAME}</p>
             {!checkUserWithRoles([USER_ROLE.ADMIN]) && <p >Website</p>}
           </div>
         </div>

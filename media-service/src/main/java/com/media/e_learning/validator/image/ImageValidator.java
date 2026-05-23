@@ -10,10 +10,10 @@ import java.util.Set;
 
 public class ImageValidator implements ConstraintValidator<ImageConstraint, MultipartFile> {
 
+    // allow jpg, jpeg, png, gif, webp
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg",
             "image/png",
-            "image/gif",
             "image/webp"
     );
     private static final long MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
@@ -21,7 +21,6 @@ public class ImageValidator implements ConstraintValidator<ImageConstraint, Mult
     private static final Map<String, byte[]> MAGIC_BYTES = Map.of(
             "image/jpeg", new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF},
             "image/png",  new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47},
-            "image/gif",  new byte[]{0x47, 0x49, 0x46},
             "image/webp", new byte[]{0x52, 0x49, 0x46, 0x46}
     );
 

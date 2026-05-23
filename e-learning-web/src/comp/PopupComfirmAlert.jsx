@@ -1,13 +1,16 @@
 import { faCircleCheck, faCircleExclamation, faCircleInfo, faCircleXmark, faClose } from "@fortawesome/free-solid-svg-icons";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons/faTriangleExclamation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isFunction } from "../helper/utils";
 
 
-const ConfirmAlert = ({ attr }) => {
+const PopupConfirmAlert = ({ attr }) => {
     const [value, setValue] = useState('');
     const [error, setError] = useState();
+    useEffect(() => {
+        setValue(attr?.value || '')
+    }, [attr])
     const handlerAccept = () => {
         setError(undefined);
         if (attr?.inputUse && attr?.inputRequired && !value?.trim()) {
@@ -69,8 +72,8 @@ const ConfirmAlert = ({ attr }) => {
                         </div>
                     </div>
                     <div className="bg-white p-4 flex flex-row-reverse">
-                        <button onClick={handlerAccept} type="button" className="inline-flex justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-600 ml-3 w-auto">Đồng ý</button>
-                        <button onClick={handlerCancel} type="button" className="inline-flex justify-center rounded-md bg-gray-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-gray-600 mt-0 w-auto">Hủy bỏ</button>
+                        <button onClick={handlerAccept} type="button" className="inline-flex justify-center rounded-md bg-gray-700 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-600 ml-3 w-auto">Đồng ý</button>
+                        <button onClick={handlerCancel} type="button" className="inline-flex justify-center rounded-md bg-white border-gray-700 px-3 py-2 text-sm font-semibold text-gray-700 inset-ring inset-ring-white/5 hover:border-gray-600 mt-0 w-auto">Hủy bỏ</button>
                     </div>
                 </div>
             </div>
@@ -78,4 +81,4 @@ const ConfirmAlert = ({ attr }) => {
     </div>
 }
 
-export default ConfirmAlert;
+export default PopupConfirmAlert;

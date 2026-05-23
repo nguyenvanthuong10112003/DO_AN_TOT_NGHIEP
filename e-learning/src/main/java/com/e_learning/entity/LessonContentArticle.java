@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @Table(name = "lesson_article")
 @Entity
 public class LessonContentArticle extends LessonContent {
-    private String abc;
+    private Integer abc;
 }

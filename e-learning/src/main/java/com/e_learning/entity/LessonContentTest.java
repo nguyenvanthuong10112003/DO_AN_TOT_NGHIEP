@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @Table(name = "lesson_test")
 @Entity
 public class LessonContentTest extends LessonContent {
-    private String cde;
+    private Boolean isMix;
 }

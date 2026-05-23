@@ -31,6 +31,7 @@ public class Course extends BaseEntity {
     private String code;
     @Column(nullable = false)
     private String name;
+    @Column(columnDefinition = "varchar(300)")
     private String description;
 
     // Các thẻ để tìm kiếm

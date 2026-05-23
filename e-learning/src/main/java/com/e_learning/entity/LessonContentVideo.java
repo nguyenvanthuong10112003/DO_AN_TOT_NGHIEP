@@ -1,9 +1,6 @@
 package com.e_learning.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,4 +14,7 @@ public class LessonContentVideo extends LessonContent {
     @OneToOne
     @JoinColumn(name = "video_id")
     private Video video;
+    @Column(columnDefinition = "varchar(300)")
+    private String qualityDefault;
+    private String summary;
 }

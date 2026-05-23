@@ -16,7 +16,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Video {
     @Id
-    String id;
-    Boolean isActive;
-    String uploadBy;
+    private String id;
+    private Boolean isActive;
+    private String uploadBy;
+    private Integer width;
+    private Integer height;
+    private Double duration;
+    private String quality;
+    private boolean hasSubtitle;
 }

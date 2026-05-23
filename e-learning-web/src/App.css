@@ -46,13 +46,12 @@ body {
   --tw-text-opacity: 1;
   box-sizing: border-box;
   font-family: 'Inter', sans-serif;
-  font-size: 1rem;
-  line-height: 1.5rem;
-  font-weight: 400;
-  color: rgb(55 65 81 / var(--tw-text-opacity, 1))
+  @apply text-base font-medium
 }
 
-
+button, input, optgroup, select, textarea {
+  @apply text-base
+}
 
 .spinner {
   top: 50%;
@@ -166,3 +165,8 @@ body {
 a {
   outline: none;
 }
+
+.tiptap-editor .ProseMirror blockquote p {
+  @apply mb-0;
+}
+

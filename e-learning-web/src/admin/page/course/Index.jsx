@@ -35,7 +35,7 @@ const PRICE_RANGE = Object.freeze([
 ])
 const LIMIT = [5, 10, 20, 50];
 const CourseIndex = () => {
-    const { handleReset, setTitle, setIsMainFull, openConfirmAlert } = useOutletContext();
+    const { handleReset, setTitle, setIsMainFull, openPopupConfirmAlert } = useOutletContext();
     const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [selectedCourses, setSelectedCourses] = useState([]);
@@ -135,7 +135,7 @@ const CourseIndex = () => {
     }
     const handleRemoveCourse = (ids) => {
         if (!hasData(ids) || !isArray(ids)) return;
-        openConfirmAlert({
+        openPopupConfirmAlert({
             type: 'warning',
             title: 'Xác nhận xóa',
             label: 'Bản ghi sẽ bị xóa vĩnh viễn, bạn có chắc muốn xóa?',

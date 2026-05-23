@@ -4,13 +4,13 @@ import { getMindInfo, linkGoogleAccount, updateInfo } from "../../service/UserSe
 import { faArrowRotateLeft, faCheck, faPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { toast } from "react-toastify";
-import { betweenDateByYear, createMessage, displayDate, getDisplayRole, getToken, getUrlGoogleLogin, handlerLoginSuccess, hasData, isEmailValid, isFunction, isObject } from "../../helper/utils";
+import { betweenDateByYear, createMessage, displayDate, getDisplayRole, getToken, getUrlGoogleLogin, handlerLoginSuccess, hasData, isEmailValid, isFunction, isObject, isString, validatePhoto } from "../../helper/utils";
 import Field from "../../comp/Field";
 import { LOCAL_STORAGE_KEY, PAGE_LOCATION } from "../../define/define";
 
 const UserInfo = () => {
     const imageRef = useRef();
-    const { setControllers, setTitle, openConfirmAlert, setCurrentUser } = useOutletContext();
+    const { setControllers, setTitle, openPopupConfirmAlert, setCurrentUser } = useOutletContext();
     const [editField, setEditField] = useState(null);
     const [tempValue, setTempValue] = useState("");
     const [user, setUser] = useState({});
@@ -158,8 +158,9 @@ const UserInfo = () => {
         }
 
         const file = selectedFiles[0];
-        if (!file.type.startsWith("image/")) {
-            toast.error("File phải là ảnh!");
+        const message = validatePhoto(file);
+        if (isString(message)) {
+            toast.error(message)
             return;
         }
 
@@ -193,7 +194,7 @@ const UserInfo = () => {
             toast.error(errorMsg);
             return;
         }
-        openConfirmAlert({
+        openPopupConfirmAlert({
             type: 'warning',
             title: 'Xác nhận cập nhật',
             label: 'Bạn có chắc muốn lưu thay đổi?',

@@ -18,6 +18,7 @@ public class Lesson extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String name;
+    @Column(columnDefinition = "varchar(300)")
     private String description;
     @Enumerated(EnumType.STRING)
     private Const.LessonType type;

@@ -1,5 +1,6 @@
 package com.media.e_learning.service.impl;
 
+import com.luciad.imageio.webp.WebPWriteParam;
 import com.media.e_learning.dto.PhotoResponse;
 import com.media.e_learning.entity.Photo;
 import com.media.e_learning.entity.PhotoData;
@@ -15,9 +16,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,8 +61,8 @@ public class PhotoServiceImpl implements PhotoService {
                     .isActive(!DataUtil.boolValue(isTemp))
                     .data(PhotoData.builder()
                         .fileName(file.getOriginalFilename())
-                        .contentType("image/png")
-                        .data(compressToPng(file))
+                        .contentType("image/webp")
+                        .data(compressToWebp(file))
                         .status(true)
                         .uploadBy(userId)
                         .uploadDatetime(now)
@@ -96,6 +102,40 @@ public class PhotoServiceImpl implements PhotoService {
 
         log.info("To: {} bytes", outputStream.size());
         return outputStream.toByteArray();
+    }
+
+    private byte[] compressToWebp(MultipartFile file) throws IOException {
+        log.info("Compress image from: {} bytes", file.getSize());
+
+        BufferedImage image = ImageIO.read(file.getInputStream());
+
+        ImageWriter writer = ImageIO
+            .getImageWritersByMIMEType("image/webp")
+            .next();
+
+        WebPWriteParam params = new WebPWriteParam(writer.getLocale());
+        params.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        params.setCompressionType(
+                params.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]
+        );
+
+        params.setCompressionQuality(0.9f);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (ImageOutputStream imageOutputStream =
+                     new MemoryCacheImageOutputStream(outputStream)) {
+            writer.setOutput(imageOutputStream);
+            writer.write(
+                null,
+                new IIOImage(image, null, null),
+                params
+            );
+            writer.dispose();
+        }
+
+        byte[] result = outputStream.toByteArray();
+        log.info("Compressed to: {} bytes", result.length);
+        return result;
     }
 
     @Override

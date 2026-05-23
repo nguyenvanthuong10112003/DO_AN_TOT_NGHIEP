@@ -14,14 +14,13 @@ const CourseDetail = () => {
         setTitle,
         setIsMainFull,
         setControllers,
-        openConfirmAlert,
+        openPopupConfirmAlert,
         setBgColor
     } = useOutletContext();
     const { courseId } = useParams();
     const [course, setCourse] = useState({})
     useEffect(() => {
         setTitle?.('Chi tiết khóa học')
-        setBgColor?.('bg-white')
         setIsMainFull?.(true)
         getCourseById(courseId)
             .then(res => {
@@ -34,7 +33,7 @@ const CourseDetail = () => {
     }, [courseId])
     const handleRemoveCourse = (ids) => {
         if (!hasData(ids) || !isArray(ids)) return;
-        openConfirmAlert({
+        openPopupConfirmAlert({
             type: 'warning',
             title: 'Xác nhận xóa',
             label: 'Bản ghi sẽ bị xóa vĩnh viễn, bạn có chắc muốn xóa?',
@@ -48,8 +47,8 @@ const CourseDetail = () => {
             }
         })
     }
-    return (<div id="detail-pg" className="bg-white p-4">
-        <div className="det-header !items-start">
+    return (<div id="detail-pg" className=" p-4">
+        <div className="topbar !items-start p-4 section-card flex-col flex-wrap xs:flex-row">
             <button type='button' className="back-btn" onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
                 <FontAwesomeIcon icon={faArrowLeft} />Danh sách
             </button>
@@ -62,8 +61,9 @@ const CourseDetail = () => {
                 <button type='button' className="btn-danger-sm" onClick={_ => handleRemoveCourse([course?.id])}><FontAwesomeIcon icon={faTrash} /></button>
             </div>
         </div>
+        <hr className='my-4'></hr>
         {hasData(course.id) && <div id="det-content" className='!gap-4 space-y-4'>
-            <div className="det-hero !flex-wrap !flex-row">
+            <div className="det-hero !flex-wrap !flex-row !bg-white">
                 <div className="det-thumb !w-full md:!w-60 !h-auto" style={{ background: '#EEEDFE' }}>
                     <img className='max-w-full max-h-full aspect-square object-cover rounded' src={course.thumbnail || "/img/course-img-default.jpg"} alt='course-image' />
                 </div>
@@ -85,7 +85,7 @@ const CourseDetail = () => {
 
             <div className="det-two-col !gap-4 !grid-cols-1 sm:!grid-cols-2">
                 <div className="det-card">
-                    <div className="det-card-title"><FontAwesomeIcon icon={faInfoCircle} style={{ fontSize: '14px' }} aria-hidden="true" />Thông tin chi tiết</div>
+                    <div className="section-title section-color-4"><FontAwesomeIcon icon={faInfoCircle} style={{ fontSize: '14px' }} aria-hidden="true" />Thông tin chi tiết</div>
                     <div className="info-row"><span className="info-key">Lĩnh vực</span><span className="info-val">{course.sector.name}</span></div>
                     <div className="info-row"><span className="info-key">Chủ đề</span><span className="info-val">{course.topic.name}</span></div>
                     <div className="info-row"><span className="info-key">Ngôn ngữ</span><span className="info-val">{LANGUAGE[course.language]}</span></div>
@@ -96,7 +96,7 @@ const CourseDetail = () => {
                     {hasData(course.lstRequiredKnowledge) && <div className="info-row !flex-row det-hero-tags !pb-0"><span className="w-full">Kiến thức cần có </span><div className='det-hero-tags'>{course.lstRequiredKnowledge?.map((tag, index) => <span key={index} className="tag-pill">{tag}</span>)}</div></div>}
                 </div>
                 <div className="det-card">
-                    <div className="det-card-title relative"><FontAwesomeIcon icon={faBookOpen} style={{ fontSize: '14px' }} aria-hidden="true" />
+                    <div className="section-title section-color-4 relative"><FontAwesomeIcon icon={faBookOpen} style={{ fontSize: '14px' }} aria-hidden="true" />
                         Chương trình học
                         <button type='button' onClick={_ => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_LESSON(course?.id))} className='cursor-pointer hover:opacity-80' title='Chỉnh sửa' ><FontAwesomeIcon icon={faArrowUpRightFromSquare} className='absolute right-0 top-0' style={{ fontSize: '14px' }} /></button>
                     </div>
@@ -129,7 +129,7 @@ const CourseDetail = () => {
             </div>
 
             {hasData(course.suggestCourses) && <div className="det-card">
-                <div className="det-card-title"><FontAwesomeIcon icon={faLightbulb} style={{ fontSize: '14px' }} />Gợi ý khóa học</div>
+                <div className="section-title section-color-4"><FontAwesomeIcon icon={faLightbulb} style={{ fontSize: '14px' }} />Gợi ý khóa học</div>
                 <div className='w-full overflow-auto'>
                     <div className='flex flex-row flex-nowrap space-x-2 w-auto'>
                         {course.suggestCourses.map((suggest, index) => <div key={index} onClick={e => { e.stopPropagation(); navigate(PAGE_LOCATION.ADMIN_DETAIL_COURSE(suggest.id)) }} className='max-w-60 min-w-60 rounded-lg overflow-hidden shadow-sm cursor-pointer border' title={suggest.name + "\n" + suggest.description}>
@@ -147,8 +147,8 @@ const CourseDetail = () => {
             </div>}
 
             <div className="det-card">
-                <div className="det-card-title"><FontAwesomeIcon icon={faCommentDots} style={{ fontSize: '14px' }} aria-hidden="true" />Nhận xét học viên</div>
-                <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-tertiary)', fontSize: '13px' }}><i className="ti ti-message-off" style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>Chưa có nhận xét nào</div>
+                <div className="section-title section-color-4"><FontAwesomeIcon icon={faCommentDots} style={{ fontSize: '14px' }} aria-hidden="true" />Nhận xét học viên</div>
+                <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-tertiary)' }}><i className="ti ti-message-off" style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }} aria-hidden="true"></i>Chưa có nhận xét nào</div>
             </div>
         </div>
         }

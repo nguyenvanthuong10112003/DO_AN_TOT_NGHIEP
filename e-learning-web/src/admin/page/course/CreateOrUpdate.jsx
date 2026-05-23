@@ -2,8 +2,8 @@ import { toast } from "react-toastify";
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import './style.css';
 import { use, useEffect, useState } from 'react';
-import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isAllNumberOrLatin, isArray, isFunction, isObject, trimAll } from '../../../helper/utils';
-import { ACTION, DIFFICULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE } from '../../../define/define';
+import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isAllNumberOrLatin, isArray, isFunction, isObject, isString, trimAll, validatePhoto } from '../../../helper/utils';
+import { ACTION, DIFFICULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE, PHOTO_ALLOWED_TYPE, PHOTO_MAXIMUM_SIZE_MB, RATIOS } from '../../../define/define';
 import { createOrUpdateCourse, getAllSector, getAllTopic, getCourseById, searchCourse, searchTag } from '../../../service/CourseService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faClock, faClose } from '@fortawesome/free-solid-svg-icons';
@@ -30,7 +30,7 @@ const courseConstruct = () => ({
 });
 
 const CreateOrUpdate = ({ action }) => {
-    const { setControllers, setTitle, handleReset, openConfirmAlert } = useOutletContext();
+    const { setControllers, setTitle, handleReset, openPopupConfirmAlert, openPopupResizeImage } = useOutletContext();
     const [sectors, setSectors] = useState([]);
     const [topics, setTopics] = useState([]);
     const [isAddNewTopic, setIsAddNewTopic] = useState(false);
@@ -48,6 +48,7 @@ const CreateOrUpdate = ({ action }) => {
     const [searchTagRs, setSearchTagRs] = useState([]);
     const navigate = useNavigate();
     const [params] = useSearchParams();
+    const [dragging, setDragging] = useState(false)
 
     useEffect(() => {
         const title = action === ACTION.CREATE ? 'Tạo khóa học' : (action === ACTION.UPDATE && 'Cập nhật khóa học');
@@ -173,8 +174,13 @@ const CreateOrUpdate = ({ action }) => {
         setCourse(prev => ({ ...prev, topicId: topic.id }))
     }
 
-    const handleThumbnailChange = async (e) => {
-        const selectedFiles = Array.from(e.target.files);
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDragging(false);
+        handleThumbnailChange(e.dataTransfer.files);
+    };
+
+    const handleThumbnailChange = async (selectedFiles) => {
         if (selectedFiles.length === 0) return;
 
         if (selectedFiles.length > 1) {
@@ -182,17 +188,21 @@ const CreateOrUpdate = ({ action }) => {
             return;
         }
 
-        const file = selectedFiles[0];
-        if (!file.type.startsWith("image/")) {
-            toast.error("File phải là ảnh!");
+        let file = selectedFiles[0];
+        const message = validatePhoto(file);
+        if (isString(message)) {
+            toast.error(message)
             return;
         }
 
-        try {
-            const response = await uploadTempPhoto([file])
-            const photoResponse = response?.data?.data?.[0];
-            setCourse(prev => ({ ...prev, thumbnail: photoResponse.url, thumbnailId: photoResponse.id }));
-        } catch { }
+        openPopupResizeImage([RATIOS.LANDSCAPE_3_2] ,file, (newFile) => {
+            file = newFile;
+            uploadTempPhoto([file])
+                .then(response => {
+                    const photoResponse = response?.data?.data?.[0];
+                    setCourse(prev => ({ ...prev, thumbnail: photoResponse.url, thumbnailId: photoResponse.id }));
+                }).catch(_ => {})
+        })
     };
 
     const handleRemoveThumbnail = async () => {
@@ -308,7 +318,7 @@ const CreateOrUpdate = ({ action }) => {
             params.price = Array.from(params.price?.split(''))?.filter(item => item >= '0' && item <= '9')?.join('')
         if (hasData(params.suggestCourses))
             params.suggestCourses = params.suggestCourses.map(c => c.id);
-        openConfirmAlert({
+        openPopupConfirmAlert({
             type: 'warning',
             title: 'Xác nhận cập nhật',
             label: 'Bạn có chắc muốn lưu thay đổi?',
@@ -437,9 +447,9 @@ const CreateOrUpdate = ({ action }) => {
 
     return <div className="max-w-3xl w-full mx-auto py-6 space-y-4">
         <div className="p-4 bg-white rounded-xl border">
-            <button type="button" className="space-x-2 hover:text-blue-500" onClick={() => navigate(-1)}>
+            <button type="button" className="space-x-2 hover:text-blue-500" onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
                 <FontAwesomeIcon icon={faArrowLeft} />
-                <span>Quay lại</span>
+                <span>Danh sách</span>
             </button>
 
             {ACTION.CREATE === action && hasData(lstTemp) && <>
@@ -449,7 +459,6 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="flex flex-col mt-2 gap-1">
                         {Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a)).map((temp, index) => {
                             const courseTemp = lstTemp[temp];
-                            console.log(formatDateTime(new Date(Number(temp))))
                             return <React.Fragment key={index}>
                                 {index > 0 && <hr />}
                                 <button onClick={() => handleChangeTemp(temp)} type="button" className={`py-2 px-4 text-start hover:bg-gray-100 flex flex-row items-center justify-between rounded-lg ${keyTemp === temp && '!bg-[var(--color-background-secondary)]'}`}>
@@ -468,7 +477,7 @@ const CreateOrUpdate = ({ action }) => {
         {(action === ACTION.CREATE || (action === ACTION.UPDATE && hasData(course?.id))) && <div className="p-4 bg-white rounded-xl border">
             <div className="page-header pb-4 mb-4">
                 <div>
-                    <div className="page-title text-xl uppercase">{ACTION.CREATE === action ? 'Tạo khóa học mới' : 'Cập nhật khóa học'}</div>
+                    <div className="page-title text-base uppercase">{ACTION.CREATE === action ? 'Tạo khóa học mới' : 'Cập nhật khóa học'}</div>
                     <div className="page-sub text-md">Điền đầy đủ thông tin {ACTION.CREATE === action ? 'để tạo khóa học mới' : 'để cập nhật khóa học'}</div>
                 </div>
             </div>
@@ -526,16 +535,20 @@ const CreateOrUpdate = ({ action }) => {
                     </div>
                     <div className="field form-full">
                         <label>Ảnh thumbnail khóa học</label>
-                        {!hasData(course?.thumbnail) && <div className="thumb-upload" id="thumb-zone" onClick={() => document.getElementById('thumb-inp').click()}>
+                        {!hasData(course?.thumbnail) && <div className={`thumb-upload ${dragging && '!border-gray-700'}`}
+                            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                            onDragLeave={() => setDragging(false)}
+                            onDrop={handleDrop}
+                            id="thumb-zone" onClick={() => document.getElementById('thumb-inp').click()}>
                             <div className="thumb-icon">↑</div>
-                            <div className="thumb-label">Nhấn để tải ảnh lên</div>
-                            <div className="thumb-hint">PNG, JPEG, WEBP, GIF · Tỉ lệ 16:9 · Tối đa 5MB</div>
+                            <div className="thumb-label">Kéo thả hoặc chọn ảnh</div>
+                            <div className="thumb-hint">{PHOTO_ALLOWED_TYPE.join(', ').toUpperCase()} · Tối đa {PHOTO_MAXIMUM_SIZE_MB}MB</div>
                         </div>}
                         {hasData(course?.thumbnail) && <div className="thumb-preview border relative !block overflow-hidden !h-80" id="thumb-prev">
                             <button onClick={handleRemoveThumbnail} type='button' className='absolute top-1 left-1 bg-white border border-t-0 border-l-0 p-1 hover:bg-gray-100 rounded-md'><FontAwesomeIcon icon={faClose} />Hủy </button>
                             <img src={course?.thumbnail} alt='thumbnail' className='w-full h-full aspect-square object-cover' />
                         </div>}
-                        <input type="file" id="thumb-inp" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
+                        <input type="file" id="thumb-inp" accept="image/*" onChange={e => handleThumbnailChange(Array.from(e.target.files))} className="hidden" />
                     </div>
 
                     <div className="field form-full">
@@ -563,7 +576,7 @@ const CreateOrUpdate = ({ action }) => {
                             setCourse(prev => ({ ...prev, price: formatNumber(e.target.value.replace(/[^0-9]/g, '')) }));
                         }} inputMode="numeric" pattern="[0-9]*" type="text" id="f-price" className={`disabled:opacity-60 transition-all ${errors?.price && '!border-red-600'}`} placeholder="Ví dụ: 500,000" min="0" disabled={course?.type === 'FREE'} />
                     </div>
-                    <div className="field form-full cursor-pointer">
+                    <div className="field form-full">
                         <div className="cert-toggle">
                             <button type="button" className={`toggle-sw ${course?.issuingCertificate === true && 'on'}`} id="cert-sw" onClick={() => { setCourse(prev => ({ ...prev, issuingCertificate: !prev.issuingCertificate, certificate: { id: prev.certificate?.id, template: certificateTemplates[0].code } })); setIsPreViewTemplateCer(false) }}></button>
                             <div>

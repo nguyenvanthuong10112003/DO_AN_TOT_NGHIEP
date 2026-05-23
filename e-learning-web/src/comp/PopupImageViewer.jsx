@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-const ImageViewer = ({ imageUrl, onClose }) => {
+const PopupImageViewer = ({ imageUrl, onClose }) => {
     useEffect(() => {
-        setScale(1); // reset zoom khi imageUrl thay đổi
+        setScale(1); 
     }, [imageUrl]);
     const [scale, setScale] = useState(1);
 
@@ -12,26 +12,31 @@ const ImageViewer = ({ imageUrl, onClose }) => {
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         setScale((prev) => {
             const next = prev + delta;
-            return Math.min(Math.max(next, 1), 3); // giới hạn zoom
+            return Math.min(Math.max(next, 1), 3); 
         });
     };
 
     const handleClick = () => {
-        setScale((prev) => (prev === 1 ? 3 : 1)); // toggle zoom
+        setScale((prev) => (prev === 1 ? 3 : 1)); 
     };
+
+    const handleClose = (e) => {
+        onClose();
+        setScale(1);
+    }
 
     return imageUrl && (
         <div className="fixed inset-0 bg-black/20 z-50">
             <div
                 className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-                onClick={onClose} // click ngoài đóng
+                onClick={handleClose} // click ngoài đóng
             >
                 <div
                     className="relative max-w-3xl max-h-full"
                     onClick={(e) => e.stopPropagation()} // tránh đóng khi click ảnh
                 >
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="absolute -top-8 right-0 text-white text-xl cursor-pointer"
                     >
                         ✕
@@ -54,4 +59,4 @@ const ImageViewer = ({ imageUrl, onClose }) => {
     );
 };
 
-export default ImageViewer;
+export default PopupImageViewer;
