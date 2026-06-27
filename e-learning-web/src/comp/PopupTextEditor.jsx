@@ -20,7 +20,6 @@ const PopupTextEditor = ({ open, onClose, openPopupUploadImage, defaultContent, 
             reset();
             onClose?.()
         }
-        console.log(content, defaultContent)
         if ((defaultContent || '') === (content || ''))
             callBack()
         else 

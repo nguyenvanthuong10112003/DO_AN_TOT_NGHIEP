@@ -1,15 +1,16 @@
 import emailRegex from "email-regex";
-import { LOCAL_STORAGE_KEY, PHOTO_ALLOWED_TYPE, PHOTO_MAXIMUM_SIZE_MB, TEXT_EDITOR_TOOLBAR_BUTTONS, USER_ROLE } from "../define/define";
+import { LOCAL_STORAGE_KEY, PHOTO_ALLOWED_TYPE, PHOTO_MAXIMUM_SIZE_MB, PROMOTION_TYPE, QUESTION_TYPE, TEXT_EDITOR_TOOLBAR_BUTTONS, USER_ROLE, VIDEO_ALLOWED_TYPE, VIDEO_MAXIMUM_SIZE_MB } from "../define/define";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextStyle from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExtension from "@tiptap/extension-image";
-import { CustomTextAlign } from "../comp/LessonEditorComp/CustomTextAlign";
+import { CustomTextAlign } from "../comp/TextEditorComp/CustomTextAlign";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
+import CustomImage from "../comp/TextEditorComp/CustomImage";
 
 export const getToken = () => {
     return localStorage.getItem(LOCAL_STORAGE_KEY.ACCESS_TOKEN);
@@ -184,6 +185,7 @@ export const deepEquals = (a, b) => {
         return true;
     }
     else if (isArray(a) && isArray(b)) {
+        if (a.length !== b.length) return false;
         for (let i = 0; i < a.length; i++) {
             if (!deepEquals(a[i], b[i])) return false;
         }
@@ -256,6 +258,31 @@ export const validatePhoto = (file) => {
     return false;
 }
 
+
+export const validateVideo = (file) => {
+    if (file == null) {
+        return "File không có dữ liệu!";
+    }
+
+    if (!file.type.startsWith("video/")) {
+        return "File phải là video!";
+    }
+
+    const type = file.type.replace('video/', '')
+
+    if (!VIDEO_ALLOWED_TYPE.includes(type)) {
+        return "Định dạng video không hợp lệ!";
+    }
+
+    const MAX_SIZE_BYTES = VIDEO_MAXIMUM_SIZE_MB * 1024 * 1024;
+
+    if (file.size > MAX_SIZE_BYTES) {
+        return `Video vượt quá ${VIDEO_MAXIMUM_SIZE_MB}MB!`;
+    }
+
+    return false;
+}
+
 export const excuteIfFunction = (fn, ...props) => {
     if (isFunction(fn)) return fn(...props);
 }
@@ -284,7 +311,7 @@ export const buildEditorConfig = (groupsBtn, { editable, content, placeholder, o
                     rel: "noopener noreferrer",
                 },
             }),
-            includesOption(groupsBtn, "IMAGE") && ImageExtension.configure({ allowBase64: false }),
+            includesOption(groupsBtn, "IMAGE") && CustomImage.configure({ allowBase64: false }),
             Placeholder.configure({ placeholder }),
             CharacterCount,
         ].filter(Boolean),
@@ -292,4 +319,39 @@ export const buildEditorConfig = (groupsBtn, { editable, content, placeholder, o
             onChange?.(editor.getHTML());
         },
     }
+}
+
+export const isQuestionTypeChoice = (typeId) => {
+    return typeId === QUESTION_TYPE.CHOICE.id || typeId === QUESTION_TYPE.MULTI_CHOICE.id;
+}
+
+export const toDouble2CAfter = (value) => {
+    return String(value)?.replace(/[^0-9.]/g, '').replace(/^(\d*\.?\d{0,2}).*$/, '$1')
+}
+
+export const split0 = (value) => {
+    if (!value) return value;
+    if (value === '0' || value === 0) return value;
+
+    let str = String(value);
+
+    while (str.length > 1 && str.startsWith('0')) {
+        str = str.slice(1);
+    }
+
+    return str;
+}
+
+export const promotionDisplay = (promotion, promotionType) => {
+    return (promotionType === PROMOTION_TYPE.MONEY.id ? (formatNumber(promotion) || 0) : (promotion || 0)) + ' ' + PROMOTION_TYPE[promotionType]?.label
+}
+
+export const caculatorPromotion = (price, promotion, promotionType) => {
+    return promotionType === PROMOTION_TYPE.MONEY.id ? promotion : 
+        (promotionType === PROMOTION_TYPE.PERCENT.id ? (price * (promotion / 100)) : 0)
+}
+
+export const caculatorPrice = (price, promotion, promotionType) => {
+    if (!(promotion > 0)) return price;
+    return price - caculatorPromotion(price, promotion, promotionType) 
 }

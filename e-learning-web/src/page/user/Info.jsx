@@ -1,16 +1,16 @@
 import React, { use, useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { getMindInfo, linkGoogleAccount, updateInfo } from "../../service/UserService";
-import { faArrowRotateLeft, faCheck, faPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRotateLeft, faCheck, faClose, faPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { toast } from "react-toastify";
 import { betweenDateByYear, createMessage, displayDate, getDisplayRole, getToken, getUrlGoogleLogin, handlerLoginSuccess, hasData, isEmailValid, isFunction, isObject, isString, validatePhoto } from "../../helper/utils";
 import Field from "../../comp/Field";
-import { LOCAL_STORAGE_KEY, PAGE_LOCATION } from "../../define/define";
+import { LOCAL_STORAGE_KEY, PAGE_LOCATION, RATIOS } from "../../define/define";
 
 const UserInfo = () => {
     const imageRef = useRef();
-    const { setControllers, setTitle, openPopupConfirmAlert, setCurrentUser } = useOutletContext();
+    const { setControllers, setTitle, openPopupConfirmAlert, setCurrentUser, openPopupResizeImage, handleReset } = useOutletContext();
     const [editField, setEditField] = useState(null);
     const [tempValue, setTempValue] = useState("");
     const [user, setUser] = useState({});
@@ -92,6 +92,9 @@ const UserInfo = () => {
                 .catch(_ => { });
         }
         init();
+        return () => {
+            handleReset?.();
+        };
     }, []);
 
     const handleEditField = (field) => {
@@ -164,22 +167,34 @@ const UserInfo = () => {
             return;
         }
 
-        setAvatarFile(file);
-        const previewUrl = URL.createObjectURL(file);
-        setUser(prev => ({ ...prev, avatar: previewUrl }))
+        openPopupResizeImage([RATIOS.AVATAR], file, true, (newFile) => {
+            setAvatarFile(newFile);
+            const previewUrl = URL.createObjectURL(newFile);
+            setUser(prev => ({ ...prev, avatar: previewUrl }))
+        })
     };
 
     const handlerReset = () => {
-        setAvatarFile(null);
-        setUser(constUser);
-        setEditField(null);
-        setTempValue(null);
+        const callBack = () => {
+            setAvatarFile(null);
+            setUser(structuredClone(constUser));
+            setEditField(null);
+            setTempValue(null);
+        }
+        if (hasChange())
+            openPopupConfirmAlert({
+                type: 'warning',
+                title: 'Xác nhận làm mới',
+                label: 'Bạn có chắc muốn hủy thay đổi?',
+                onAccept: callBack
+            })
+        else callBack()
     }
 
     const hasChange = () => {
         const has = hasData(avatarFile) || Object.keys(fields).some(key => {
             const field = fields[key];
-            return user[field.fieldName] != constUser[field.fieldName];
+            return user[field.fieldName] !== constUser[field.fieldName];
         });
         return has;
     }
@@ -187,7 +202,7 @@ const UserInfo = () => {
     const handlerSave = () => {
         const errorMsg = Object.keys(fields).filter(key => {
             const field = fields[key];
-            return !((!field.isRequired || hasData(user[field.fieldName])) && (isFunction(field.validate) || field.validate(user[field.fieldName])));
+            return !((!field.isRequired || hasData(user[field.fieldName])) && (!isFunction(field.validate) || field.validate(user[field.fieldName])));
         }).map(key => fields[key].label + ' không hợp lệ')
             .join('; ');
         if (hasData(errorMsg)) {
@@ -215,11 +230,24 @@ const UserInfo = () => {
         })
     }
 
+    const handleRemoveAvatarFile = () => {
+        if (!avatarFile) return;
+        openPopupConfirmAlert({
+            type: 'warning',
+            title: 'Xác nhận xóa',
+            label: 'Bạn có chắc muốn xóa ảnh này?',
+            onAccept: () => {
+                setAvatarFile(null)
+                setUser(prev => ({...prev, avatar: constUser.avatar}))
+            }
+        })
+    }
+
     return Object.keys(user || {}).length > 0 && (
         <div className="mt-2 flex items-center justify-center w-full mb-2">
             <div className="w-full max-w-3xl bg-white rounded-2xl border">
                 <div className="w-full text-end p-2 rounded-t-2xl flex flex-row items-center justify-end gap-4">
-                    <button type="button" className="" title="Đặt lại" onClick={handlerReset}>
+                    <button type="button" disabled={!hasChange()} className="disabled:pointer-events-none disabled:opacity-60" title="Đặt lại" onClick={handlerReset}>
                         <FontAwesomeIcon icon={faArrowRotateLeft} className="text-gray-500 w-6 h-6 hover:text-gray-600" />
                     </button>
                     <button onClick={handlerSave} disabled={!hasChange()} type="button" className="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition disabled:opacity-40 disabled:hover:bg-blue-500">
@@ -241,11 +269,12 @@ const UserInfo = () => {
                             </div>
 
                             <button
-                                onClick={handleClickOpenExplorer}
+                                onClick={(avatarFile && user.avatar) ? handleRemoveAvatarFile : handleClickOpenExplorer}
                                 type="button"
                                 className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-white border border-gray-300 shadow flex items-center justify-center hover:bg-gray-100 transition"
                             >
-                                <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-gray-700 hover:text-gray-900" />
+                                {avatarFile && user.avatar && <FontAwesomeIcon icon={faClose} className="w-3.5 h-3.5 text-red-700" />}
+                                {!(avatarFile && user.avatar) && <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-gray-700" />}
                             </button>
                         </div>
 

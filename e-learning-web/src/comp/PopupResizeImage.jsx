@@ -7,10 +7,16 @@ import useCanvasDraw from '../hooks/useCanvasDraw';
 import { RATIOS } from '../define/define';
 import { useOutletContext } from 'react-router-dom';
 import { isFunction } from '../helper/utils';
+import { type } from '@testing-library/user-event/dist/type';
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
-const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios = [RATIOS.FREE], openPopupConfirmAlert }) => {
+const CHANGE_TYPE = Object.freeze({
+    CROP: 'CROP',
+    SCALE: 'SCALE'
+})
+
+const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios = [RATIOS.FREE], openPopupConfirmAlert, requireCrop }) => {
     const [dragging, setDragging] = useState(null);
     const [cropBox, setCropBox] = useState(null);
     const canvasRef = useRef();
@@ -30,7 +36,7 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
         const maxW = el.clientWidth - 48 - (isMd ? bl.clientWidth : 0);
         const maxH = el.clientHeight - 48 - (isMd ? 0 : bl.clientHeight);
         const scale = Math.min(maxW / image.w, maxH / image.h);
-        const w = Math.round(image.w * scale), h = Math.round(image.h * scale)
+        const w = Math.ceil(image.w * scale), h = Math.ceil(image.h * scale)
         return { w, h, scale };
     }, [image]);
 
@@ -49,7 +55,7 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
     }, []);
 
     useEffect(() => {
-        handleRatioChange(ratios[0]?.value)
+        handleRatioChange(ratios[0]?.value, ratios[0]?.avatar)
     }, [displaySize])
 
     useEffect(() => {
@@ -343,6 +349,7 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
     }
 
     const applyCrop = useCallback(() => {
+        if (!canApplyCrop()) return;
         if (!cropBox || cropBox.w < 2 || cropBox.h < 2 || !image) return;
         const s = displaySize.scale;
         const sx = cropBox.x / s, sy = cropBox.y / s;
@@ -355,13 +362,20 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
         const newSrc = tmp.toDataURL('image/png');
         const newEl = new Image();
         newEl.onload = () => {
-            history.push({ src: image.src, w: image.w, h: image.h });
+            history.push({ src: image.src, w: image.w, h: image.h, type: CHANGE_TYPE.CROP });
             imgElRef.current = newEl;
             setImage({ src: newSrc, w: sw, h: sh, name: image.name, el: newEl });
             setCropBox(null);
         };
         newEl.src = newSrc;
     }, [cropBox, image, displaySize, history]);
+
+    const canApplyCrop = () => {
+        if (!hasSelection()) return false;
+        const s = displaySize.scale;
+        const sw = cropBox.w / s, sh = cropBox.h / s;
+        return !(image.w === sw && image.h === sh)
+    }
 
     const handleUndo = () => {
         const snap = history.pop();
@@ -397,9 +411,11 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
             }
         );
 
-        setImageFile?.(file);
-        reset();
-        onClose?.();
+        try {
+            await setImageFile?.(file);
+            reset();
+            onClose?.();
+        } catch (e) { }
     };
 
     const hasSelection = () => cropBox && cropBox.w > 2 && cropBox.h > 2;
@@ -456,7 +472,8 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
             history.push({
                 src: image.src,
                 w: image.w,
-                h: image.h
+                h: image.h,
+                type: CHANGE_TYPE.SCALE
             });
 
             imgElRef.current = newEl;
@@ -474,6 +491,8 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
 
         newEl.src = newSrc;
     };
+
+    const canSave = () => history.canUndo && (!requireCrop || history.checkExist((his) => his.type === CHANGE_TYPE.CROP))
 
     return imageFile && (
         <div className="fixed inset-0 z-[25] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={handleClose}>
@@ -553,7 +572,7 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
                                 md:border-l md:px-4 md:py-5 md:border-t-0`}
                     >
                         <div className={`flex flex-col h-full gap-2 w-auto`}>
-                            <div className={''}>
+                            <div className={'space-y-2 flex flex-col items-center'}>
                                 <div className={`flex flex-row flex-wrap justify-center gap-2 items-stretch`}>
                                     {cropBox?.h > 0 && cropBox?.w > 0 && <span className='text-sm border flex items-center justify-center px-2 rounded-md'>{Math.floor(cropBox?.w / displaySize?.scale)}x{Math.floor(cropBox?.h / displaySize?.scale)}</span>}
                                     {ratios.map((r) => {
@@ -576,27 +595,47 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
                                         );
                                     })}
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={applyCrop}
+                                    disabled={!canApplyCrop()}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border bg-violet-500 text-xs font-semibold text-white hover:bg-violet-400 transition disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
+                                >
+                                    <FontAwesomeIcon icon={faScissors} className="text-[11px]" />
+                                    Áp dụng cắt
+                                </button>
                             </div>
 
                             <hr></hr>
 
-                            <div className='flex flex-col items-center'>
-                                <span className='w-full max-w-80 text-sm flex flex-row justify-between'>
-                                    <span>{scale}%</span>
-                                    <span>{Math.round(image?.w * scale / 100)}x{Math.round(image?.h * scale / 100)}</span>
-                                </span>
-                                <input
-                                    className='w-full max-w-80'
-                                    type="range"
-                                    min={1}
-                                    max={100}
-                                    step={1}
-                                    value={scale}
-                                    onChange={(e) => setScale(+e.target.value)}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onMouseMove={(e) => e.stopPropagation()}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
+                            <div className='flex flex-row flex-nowrap space-x-2'>
+                                <div className='flex flex-col items-center justify-center'>
+                                    <span className='w-full max-w-80 text-sm flex flex-row justify-between'>
+                                        <span>{scale}%</span>
+                                        <span>{Math.round(image?.w * scale / 100)}x{Math.round(image?.h * scale / 100)}</span>
+                                    </span>
+                                    <input
+                                        className='w-full max-w-80'
+                                        type="range"
+                                        min={1}
+                                        max={100}
+                                        step={1}
+                                        value={scale}
+                                        onChange={(e) => setScale(+e.target.value)}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onMouseMove={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleApplyScale}
+                                    disabled={scale === 100}
+                                    className="my-4 text-nowrap flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-500 bg-violet-50 text-xs font-semibold text-gray-600 hover:bg-violet-600 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
+                                >
+                                    <FontAwesomeIcon icon={faExpand} className="text-[11px]" />
+                                    Áp dụng tỷ lệ
+                                </button>
                             </div>
 
                             <hr></hr>
@@ -606,7 +645,7 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
                                     type="button"
                                     onClick={handleUndo}
                                     disabled={!history.canUndo}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none"
                                 >
                                     <FontAwesomeIcon icon={faUndo} className="text-[11px]" />
                                     Hoàn tác
@@ -614,29 +653,9 @@ const PopupResizeImage = React.memo(({ imageFile, setImageFile, onClose, ratios 
 
                                 <button
                                     type="button"
-                                    onClick={handleApplyScale}
-                                    disabled={scale === 100}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-500 bg-violet-50 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                    <FontAwesomeIcon icon={faExpand} className="text-[11px]" />
-                                    Áp dụng tỷ lệ
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={applyCrop}
-                                    disabled={!hasSelection()}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-violet-500 bg-violet-50 text-xs font-semibold text-violet-600 hover:bg-violet-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                    <FontAwesomeIcon icon={faScissors} className="text-[11px]" />
-                                    Áp dụng cắt
-                                </button>
-
-                                <button
-                                    type="button"
                                     onClick={handleExport}
-                                    disabled={!history.canUndo}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-xs font-semibold text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                    disabled={!canSave()}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-xs font-semibold text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
                                 >
                                     <FontAwesomeIcon icon={faCheck} className="text-[11px]" />
                                     Lưu thay đổi

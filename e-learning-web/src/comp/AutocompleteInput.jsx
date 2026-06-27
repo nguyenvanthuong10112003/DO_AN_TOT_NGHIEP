@@ -57,7 +57,7 @@ const AutocompleteInput = ({ lst, value, setValue, onChange, displayItem, placeh
             setValue(getValueItem(item))
     }
     return <div ref={wrapperRef} className="relative w-full">
-        <input type="text" onKeyDown={onKeyDown} className={`z-10 relative ${classInput}`} placeholder={placeholder} onChange={inputOnChange} value={displayItem(value)} />
+        <input type="text" onKeyDown={onKeyDown} className={`z-10 relative ${classInput}`} placeholder={placeholder} onChange={inputOnChange} value={displayItem(value) || ''} />
         {isShowLst && optionShowList && <ul className="absolute z-20 mt-2.5 p-1 bg-white border rounded-md w-full max-w-full overflow-auto shadow-md">
             {hasData(lst) && lst.map((item, index) => {
                 return <React.Fragment key={index} >

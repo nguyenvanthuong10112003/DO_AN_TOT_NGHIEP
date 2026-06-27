@@ -12,6 +12,7 @@ import PopupResizeImage from "../comp/PopupResizeImage";
 import PopupImageViewer from "../comp/PopupImageViewer";
 import PopupUploadImage from "../comp/PopupUploadImage";
 import PopupTextEditor from "../comp/PopupTextEditor";
+import { getAdminStatistics } from "../service/StatisticService";
 
 const Layout = () => {
     const navigate = useNavigate();
@@ -22,20 +23,18 @@ const Layout = () => {
     const [currentUser, setCurrentUser] = useState();
     const [isMainFull, setIsMainFull] = useState(false);
     const [bgColor, setBgColor] = useState('bg-gray-50');
-
     const [popupResizeImageFile, setPopupResizeImageFile] = useState(undefined);
+    const [popupResizeImageFileRequireCrop, setPopupResizeImageFileRequireCrop] = useState(undefined)
     const [popupResizeImageHandleSave, setPopupResizeImageHandleSave] = useState(() => { })
     const [popupResizeImageRatios, setPopupResizeImageRatios] = useState(undefined);
-
     const [popupImageViewerUrl, setPopupImageViewerUrl] = useState(null);
-    
     const [popupUploadImageIsOpen, setPopupUploadImageIsOpen] = useState(false);
     const [popupUploadImageHandleUpload, setPopupUploadImageHandleUpload] = useState(() => { })
-
     const [popupTextEditorIsOpen, setPopupTextEditorIsOpen] = useState(false);
     const [popupTextEditorContent, setPopupTextEditorContent] = useState('');
     const [popupTextEditorGroupsButton, setPopupTextEditorGroupsButton] = useState([]);
-    const [popupTextEditorHandleSave, setPopupTextEditorHandleSave] = useState(() => {});
+    const [popupTextEditorHandleSave, setPopupTextEditorHandleSave] = useState(() => { });
+    const [statistic, setStatistic] = useState({});
 
     useEffect(() => {
         const urlBefore = sessionStorage.getItem(LOCAL_STORAGE_KEY.BEFORE_URL);
@@ -50,6 +49,12 @@ const Layout = () => {
         setActiveItem(pathNameSplit[1].trim().length === 0 ? 'home' : pathNameSplit[1]);
         setCurrentUser(getUserInfo());
 
+        getAdminStatistics()
+            .then(res => {
+                setStatistic(res.data.data);
+            })
+            .catch(_ => { })
+
         const handleClick = (e) => {
             const target = e.target;
             if (target.tagName === 'IMG') {
@@ -60,6 +65,7 @@ const Layout = () => {
         document.addEventListener('click', handleClick);
         return () => {
             document.removeEventListener('click', handleClick);
+            console.log('hưllo')
         };
     }, []);
     useEffect(() => {
@@ -67,28 +73,32 @@ const Layout = () => {
     }, [title]);
 
     const onConfirmAlertCloseDefault = () => {
-        setConfirmAlertAttr(prev => ({ ...prev, isOpen: false }))
+        setConfirmAlertAttr(constructAlertAttr())
     };
     const onConfirmAlertAcceptDefault = () => {
-        setConfirmAlertAttr(prev => ({ ...prev, isOpen: false }))
+        setConfirmAlertAttr(constructAlertAttr())
     }
-    const [popupConfirmAlertAttr, setConfirmAlertAttr] = useState({
-        isOpen: false,
-        iconUse: true,
-        type: 'success',
-        title: 'Thông báo',
-        label: 'Thông báo',
-        onClose: onConfirmAlertCloseDefault,
-        onAcceptDefault: onConfirmAlertAcceptDefault,
-        inputUse: false,
-        inputType: 'text',
-        inputOnChange: () => { },
-        inputRequired: false
-    })
-    const openPopupResizeImage = (ratios, imageFile, handleSave) => {
+    const constructAlertAttr = () => {
+        return {
+            isOpen: false,
+            iconUse: true,
+            type: 'success',
+            title: 'Thông báo',
+            label: 'Thông báo',
+            onClose: onConfirmAlertCloseDefault,
+            onAcceptDefault: onConfirmAlertAcceptDefault,
+            inputUse: false,
+            inputType: 'text',
+            inputOnChange: () => { },
+            inputRequired: false
+        }
+    }
+    const [popupConfirmAlertAttr, setConfirmAlertAttr] = useState(constructAlertAttr())
+    const openPopupResizeImage = (ratios, imageFile, requireCrop, handleSave) => {
         setPopupResizeImageFile(imageFile);
         setPopupResizeImageRatios(ratios)
         setPopupResizeImageHandleSave(prev => handleSave)
+        setPopupResizeImageFileRequireCrop(!!requireCrop)
     }
     const openPopupUploadImage = (handleUpload) => {
         setPopupUploadImageIsOpen(true);
@@ -105,24 +115,25 @@ const Layout = () => {
         setPopupResizeImageHandleSave(() => { })
         setPopupResizeImageRatios(undefined)
         setPopupTextEditorContent('')
+        setPopupResizeImageFileRequireCrop(undefined)
     }
     const onClosePopupUploadImage = () => {
         setPopupUploadImageIsOpen(false);
-        setPopupUploadImageHandleUpload(() => {})
+        setPopupUploadImageHandleUpload(() => { })
     }
     const onClosePopupTextEditor = () => {
         setPopupTextEditorIsOpen(false);
         setPopupTextEditorGroupsButton([])
         setPopupTextEditorContent('')
-        setPopupTextEditorHandleSave(prev => () => {})
+        setPopupTextEditorHandleSave(prev => () => { })
     }
     const openPopupConfirmAlert = (attr) => {
         setConfirmAlertAttr(prev => ({
             ...prev, ...attr, isOpen: true,
-            onAccept: () => {
+            onAccept: (...params) => {
                 onConfirmAlertAcceptDefault();
                 if (isFunction(attr?.onAccept))
-                    attr?.onAccept();
+                    attr?.onAccept?.(...params);
             },
             onClose: () => {
                 onConfirmAlertCloseDefault();
@@ -143,12 +154,26 @@ const Layout = () => {
         setTitle('');
         hasUnsavedChangesStore.set(false);
     }
+    const scrollToId = (id, { top }) => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            const t =
+                element.getBoundingClientRect().top +
+                window.pageYOffset - (top || 0);
+
+            window.scrollTo({
+                top: t,
+                behavior: "smooth"
+            });
+        }
+    }
     return <>
         <div className="">
             <Header currentUser={currentUser} toggleSideBar={toggleSideBar} />
-            <Sidebar currentUser={currentUser} isOpenSideBar={isOpenSideBar} />
-            <div className={`min-h-screen pt-16 ${bgColor || 'bg-gray-50'} w-full ${isOpenSideBar ? 'md:pl-[20rem]' : ''} transition-all duration-500 ease-in-out flex flex-col justify-between`}>
-                <div className={`flex-1 ${isMainFull !== true && `p-2 ${controllers && isArray(controllers) && controllers.length > 0 && 'pb-6'}`}`}>
+            <Sidebar statistic={statistic} currentUser={currentUser} isOpenSideBar={isOpenSideBar} />
+            <div className={`min-h-screen pt-16 ${bgColor || 'bg-gray-50'} w-full ${isOpenSideBar ? 'sm:pl-[20rem]' : ''} transition-all duration-500 ease-in-out flex flex-col justify-between`}>
+                <div className={`@container flex-1 ${isMainFull !== true && `p-2 ${controllers && isArray(controllers) && controllers.length > 0 && 'pb-6'}`}`}>
                     {controllers && isArray(controllers) && controllers.length > 0 && <div className={`flex flex-row ${isMainFull && 'p-2'}`}>
                         {controllers.map((controller, index) => {
                             return <li key={index} className="list-none text-sm">
@@ -161,7 +186,7 @@ const Layout = () => {
                         })}
                     </div>}
                     <div>
-                        <Outlet context={{ setControllers, setTitle, openPopupConfirmAlert, setCurrentUser, setIsMainFull, handleReset, setBgColor, openPopupResizeImage, openPopupUploadImage, openPopupTextEditor }} />
+                        <Outlet context={{ setControllers, setTitle, openPopupConfirmAlert, setCurrentUser, setIsMainFull, handleReset, setBgColor, openPopupResizeImage, openPopupUploadImage, openPopupTextEditor, scrollToId }} />
                     </div>
                 </div>
                 <Footer currentUser={currentUser} />
@@ -169,7 +194,7 @@ const Layout = () => {
         </div>
         <PopupConfirmAlert attr={popupConfirmAlertAttr} />
         <PopupUploadImage open={popupUploadImageIsOpen} onClose={onClosePopupUploadImage} onInsert={popupUploadImageHandleUpload} openPopupConfirmAlert={openPopupConfirmAlert} openPopupResizeImage={openPopupResizeImage} />
-        <PopupResizeImage imageFile={popupResizeImageFile} setImageFile={popupResizeImageHandleSave} onClose={onClosePopupResizeImage} ratios={popupResizeImageRatios} openPopupConfirmAlert={openPopupConfirmAlert} />
+        <PopupResizeImage requireCrop={popupResizeImageFileRequireCrop} imageFile={popupResizeImageFile} setImageFile={popupResizeImageHandleSave} onClose={onClosePopupResizeImage} ratios={popupResizeImageRatios} openPopupConfirmAlert={openPopupConfirmAlert} />
         <PopupImageViewer imageUrl={popupImageViewerUrl} onClose={onClosePopupImageViewer} />
         <PopupTextEditor defaultContent={popupTextEditorContent} open={popupTextEditorIsOpen} openPopupUploadImage={openPopupUploadImage} groupsButton={popupTextEditorGroupsButton} handleSave={popupTextEditorHandleSave} onClose={onClosePopupTextEditor} openPopupConfirmAlert={openPopupConfirmAlert} />
     </>

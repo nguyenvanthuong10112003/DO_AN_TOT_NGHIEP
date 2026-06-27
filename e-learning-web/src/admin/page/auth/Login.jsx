@@ -46,12 +46,12 @@ const LoginAdmin = () => {
                 <form onSubmit={(e) => { e.preventDefault(); handlerSubmit(); }} className="min-w-[300px]" autoComplete="off">
                     <div className="">
                         <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên đăng nhập</label>
-                        <input value={username} onChange={(e) => {setUsername(e.target.value); if (!!errors.username) setErrors({...errors, username: ''})}} type="text" id="username" className="shadow-sm rounded-md w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:shadow" placeholder="Nhập tên đăng nhập" required />
+                        <input value={username || ''} onChange={(e) => {setUsername(e.target.value); if (!!errors.username) setErrors({...errors, username: ''})}} type="text" id="username" className="shadow-sm rounded-md w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:shadow" placeholder="Nhập tên đăng nhập" required />
                         <span className="text-red-600 font-normal text-sm">{errors.username || <>&nbsp;</>}</span>
                     </div>
                     <div className="">
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu</label>
-                        <input value={password} onChange={(e) => {setPassword(e.target.value); if (!!errors.password) setErrors({...errors, password: ''})}} type="password" id="password" className="shadow-sm rounded-md w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:shadow" placeholder="Nhập mật khẩu" required />
+                        <input value={password || ''} onChange={(e) => {setPassword(e.target.value); if (!!errors.password) setErrors({...errors, password: ''})}} type="password" id="password" className="shadow-sm rounded-md w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:shadow" placeholder="Nhập mật khẩu" required />
                         <span className="text-red-600 font-normal text-sm">{errors.password || <>&nbsp;</>}</span>
                     </div>
                     <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-semibold">Đăng nhập</button>

@@ -22,7 +22,8 @@ let refreshPromise = null;
 // Thêm interceptor vào request để kiểm tra và làm mới token nếu cần
 axiosInstance.interceptors.request.use(
   async (config) => {
-    loadingStore.set(true);
+    if (!config.skipLoading) 
+      loadingStore.set(true);
     let token = getToken();
     if (token) {
       const tokenExpiration = jwtDecode(token).exp;
@@ -38,7 +39,6 @@ axiosInstance.interceptors.request.use(
 
           refreshPromise = refresh(token)
             .then(response => {
-              console.log(response)
               const newToken = response.data.data.token;
               localStorage.setItem(LOCAL_STORAGE_KEY.ACCESS_TOKEN, newToken);
               return newToken;
@@ -88,7 +88,7 @@ axiosInstance.interceptors.response.use(
         toast.error(error?.response?.data?.message || 'Bạn không có quyền truy cập chức năng này');
     } else if (error.code === 'ECONNABORTED') {
       toast.error('Lỗi kết nối: Server mất quá nhiều thời gian để phản hồi');
-    } else 
+    } else if (error.config?.showError !== false)
       toast.error(error?.response?.data?.message || 'Có lỗi xảy ra');
     // Nếu là lỗi khác thì trả về reject để nơi gọi tự xử lý
     return Promise.reject(error);

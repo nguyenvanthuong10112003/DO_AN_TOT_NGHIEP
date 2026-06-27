@@ -1,4 +1,9 @@
+import { faFileLines, faListCheck, faPlay } from "@fortawesome/free-solid-svg-icons"
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Code2, Heading, Heading1, Heading2, Heading3, Highlighter, ImageIcon, Italic, Link2, List, ListOrdered, Minus, Quote, Redo2, RemoveFormatting, Strikethrough, Underline, Undo2 } from "lucide-react"
+import Template1 from "../comp/CertificateTemplate/Template1"
+import Template2 from "../comp/CertificateTemplate/Template2"
+import Template3 from "../comp/CertificateTemplate/Template3"
+import Template4 from "../comp/CertificateTemplate/Template4"
 
 export const LOCAL_STORAGE_KEY = Object.freeze({
     ACCESS_TOKEN: 'access_token',
@@ -22,10 +27,13 @@ export const PAGE_LOCATION = Object.freeze({
     FORGET: '/auth/forget',
     LOGIN_ADMIN: '/admin/auth/login',
     ADMIN: '/admin',
-    COURSES: '/courses',
     USER_INDEX: '/user',
     USER_INFO: '/user/info',
     USER_CHANGE_PW: '/user/change-pw',
+    USER_COURSE_INDEX: '/course',
+    USER_COURSE_DETAIL: (courseId) => `/course/${courseId}`,
+    USER_LEARN_LESSON: (courseId, lessonId) => `/course/${courseId}/learn?lessonId=${lessonId}`,
+
     ADMIN_CREATE_COURSE: '/admin/course/create',
     ADMIN_UPDATE_COURSE: '/admin/course/update',
     ADMIN_DETAIL_COURSE: (courseId) => `/admin/course/${courseId}`,
@@ -123,10 +131,6 @@ export const QUESTION_TYPE = Object.freeze({
     MULTI_CHOICE: {
         id: 'MULTI_CHOICE',
         name: 'Câu hỏi trắc nghiệm nhiều đáp án'
-    },
-    FILL: {
-        id: 'FILL',
-        name: 'Điền đáp án vào ô trống'
     },
     ARGUMENT: {
         id: 'ARGUMENT',
@@ -356,9 +360,85 @@ export const TEXT_EDITOR_TOOLBAR_BUTTONS = Object.freeze({
       type: "button",
       icon: RemoveFormatting,
       title: "Xoá định dạng",
-      action: (editor) =>
-        editor?.chain()?.focus()?.clearNodes()?.unsetAllMarks()?.run(),
+      action: (editor) => {
+        editor?.chain()?.focus()?.clearNodes()?.unsetAllMarks()?.run();
+      },
       active: false,
     },
   },
 });
+
+export const LESSON_TYPE = Object.freeze({
+    ARTICLE: {
+        id: "ARTICLE",
+        label: "Bài viết",
+        icon: faFileLines,
+        bg: "#E6F1FB",
+        color: "#0C447C",
+    },
+    VIDEO: {
+        id: "VIDEO",
+        label: "Video",
+        icon: faPlay,
+        bg: "#E1F5EE",
+        color: "#085041",
+    },
+    TEST: {
+        id: "TEST",
+        label: "Bài kiểm tra",
+        icon: faListCheck,
+        bg: "#EEEDFE",
+        color: "#3C3489",
+    },
+});
+
+export const VIDEO_QUALITY = Object.freeze([1080, 720, 480, ])
+
+export const PROMOTION_TYPE = Object.freeze({
+  PERCENT: {
+    id: 'PERCENT',
+    label: '%'
+  },
+  MONEY: {
+    id: 'MONEY',
+    label: 'VNĐ'
+  }
+})
+ 
+export const COURSE_CERTIFICATE = Object.freeze([
+    { template: Template1, name: 'Mẫu 1', code: 'Template1' },
+    { template: Template2, name: 'Mẫu 2', code: 'Template2' },
+    { template: Template3, name: 'Mẫu 3', code: 'Template3' },
+    { template: Template4, name: 'Mẫu 4', code: 'Template4' }
+]);
+
+export const SORT_MODE = Object.freeze({
+    ASC: 'ASC',
+    DESC: 'DESC'
+})
+
+export const COURSE_SORT_BY = Object.freeze({
+    NAME: { label: 'Tên khóa học', key: 'NAME' },
+    CREATED_TIME: { label: 'Thời gian tạo', key: 'CREATED_TIME' },
+    PRICE: { label: 'Giá', key: 'PRICE' }
+})
+
+export const COURSE_PRICE_RANGE = Object.freeze([
+    { priceTo: 200000 },
+    { priceFrom: 200000, priceTo: 500000 },
+    { priceFrom: 500000, priceTo: 1000000 },
+    { priceFrom: 1000000 }
+])
+
+export const ScoringMode = Object.freeze({
+    PER_QUESTION: {
+      key: 'PER_QUESTION',
+      label: 'Chấm ngay sau mỗi câu'
+    },      
+    AFTER_COMPLETION: {
+      key: 'AFTER_COMPLETION',
+      label: 'Chấm sau khi hoàn thành bài'
+    }
+})
+
+export const EvaluateStar = Object.freeze([1,2,3,4,5])

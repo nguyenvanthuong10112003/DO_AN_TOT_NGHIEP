@@ -87,7 +87,7 @@ const Forget = () => {
                             type="text"
                             placeholder="Nhập email"
                             className="w-full border px-3 py-2 rounded"
-                            value={email}
+                            value={email || ''}
                             onChange={(e) => setEmail(e.target.value)}
                         />
 
@@ -111,7 +111,7 @@ const Forget = () => {
                                 onChange={e => setVerifyCode(e.target.value)}
                                 className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                                 maxLength={10}
-                                value={verifyCode}
+                                value={verifyCode || ''}
                             />
                             <button
                                 disabled={timeLeft > 0}

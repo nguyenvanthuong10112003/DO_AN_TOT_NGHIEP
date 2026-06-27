@@ -7,11 +7,14 @@ import { getEmail, hasData, isFunction } from "../../helper/utils";
 import { changePassword } from "../../service/UserService";
 
 const ChangePassword = () => {
-    const { setControllers, setTitle } = useOutletContext();
+    const { setControllers, setTitle, handleReset } = useOutletContext();
     const [timeLeft, setTimeLeft] = useState(0);
     useEffect(() => {
         if (isFunction(setTitle)) setTitle('Đổi mật khẩu');
         if (isFunction(setControllers)) setControllers([{ name: 'Người dùng' }, { name: 'Thông tin cá nhân', url: PAGE_LOCATION.USER_INFO }, { name: 'Đổi mật khẩu' }]);
+        return () => {
+            handleReset?.();
+        };
     }, []);
     const [form, setForm] = useState({
         oldPassword: "",
@@ -19,6 +22,7 @@ const ChangePassword = () => {
         confirmPassword: ""
     });
     const [verifyCode, setVerifyCode] = useState('');
+    const [firstSendVerifyCode, setFirstSendVerifyCode] = useState(false)
 
     useEffect(() => {
         if (timeLeft <= 0) return;
@@ -38,6 +42,7 @@ const ChangePassword = () => {
         }
         sendVerifyCode(email)
             .then(_ => {
+                if (!firstSendVerifyCode) setFirstSendVerifyCode(true)
                 setTimeLeft(60);
                 toast.success('Gửi thành công, vui lòng kiểm tra hộp thư!')
             })
@@ -121,7 +126,7 @@ const ChangePassword = () => {
                         placeholder="Mật khẩu cũ"
                         onChange={handleChange}
                         className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
-                        value={form.oldPassword}
+                        value={form.oldPassword || ''}
                         maxLength={100}
                     />
 
@@ -131,7 +136,7 @@ const ChangePassword = () => {
                         placeholder="Mật khẩu mới"
                         onChange={handleChange}
                         className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
-                        value={form.newPassword}
+                        value={form.newPassword || ''}
                         maxLength={100}
                     />
 
@@ -141,7 +146,7 @@ const ChangePassword = () => {
                         placeholder="Nhập lại mật khẩu"
                         onChange={handleChange}
                         className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
-                        value={form.confirmPassword}
+                        value={form.confirmPassword || ''}
                         maxLength={100}
                     />
 
@@ -162,8 +167,8 @@ const ChangePassword = () => {
 
                 {/* Reset password */}
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-600 text-center">
-                        Quên mật khẩu? <br></br> <span className="text-gray-500 text-xs">Nhập mã xác thực gửi về email để nhận mật khẩu mới</span>
+                    <p className="text-sm text-gray-600 text-center font-semibold">
+                        Quên mật khẩu? <br></br> <span className="text-gray-500 text-xs font-medium">Nhập mã xác thực gửi về email để nhận mật khẩu mới</span>
                     </p>
 
                     <div className="flex flex-row flex-nowrap">
@@ -173,7 +178,7 @@ const ChangePassword = () => {
                             onChange={e => setVerifyCode(e.target.value)}
                             className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
                             maxLength={10}
-                            value={verifyCode}
+                            value={verifyCode || ''}
                         />
                         <button
                             disabled={timeLeft > 0}
@@ -185,8 +190,9 @@ const ChangePassword = () => {
                     </div>
 
                     <button
+                        disabled={!firstSendVerifyCode || !(verifyCode?.length > 0)}
                         onClick={handleSendNewPassword}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition"
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold transition disabled:opacity-60 disabled:pointer-events-none"
                     >
                         Gửi mật khẩu mới
                     </button>

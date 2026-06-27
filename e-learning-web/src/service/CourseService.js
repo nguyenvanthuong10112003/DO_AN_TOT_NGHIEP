@@ -36,3 +36,25 @@ export const countCourse = async () => {
 export const removeCourse = async (ids) => {
     return await axiosInstance.post(`${process.env.REACT_APP_API_BASE_URL}/admin/courses/remove`, ids)
 }
+
+export const createOrUpdateLesson = async (courseId, chapters) => {
+    return await axiosInstance.post(`${process.env.REACT_APP_API_BASE_URL}/admin/courses/lessons/createOrUpdate`, { chapters, courseId })
+}
+
+export const getCourseDetailById = async (courseId) => {
+    return await axiosInstance.get(`${process.env.REACT_APP_API_BASE_URL}/courses/${courseId}/detail`)
+}
+
+export const getLessonById = async (lessonId) => {
+    return await axiosInstance.get(`${process.env.REACT_APP_API_BASE_URL}/lessons/${lessonId}`)
+}
+
+export const finishLesson = async (lessonId) => {
+    return await axiosInstance.post(`${process.env.REACT_APP_API_BASE_URL}/lessons/${lessonId}/finish`)
+}
+
+export const subscribeCourse = async (courseId) => {
+    return await axiosInstance.post(`${process.env.REACT_APP_API_BASE_URL}/courses/subscribe`, {
+        courseId
+    })
+}

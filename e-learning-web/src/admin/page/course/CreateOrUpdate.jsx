@@ -1,9 +1,8 @@
 import { toast } from "react-toastify";
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import './style.css';
 import { use, useEffect, useState } from 'react';
-import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isAllNumberOrLatin, isArray, isFunction, isObject, isString, trimAll, validatePhoto } from '../../../helper/utils';
-import { ACTION, DIFFICULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE, PHOTO_ALLOWED_TYPE, PHOTO_MAXIMUM_SIZE_MB, RATIOS } from '../../../define/define';
+import { deepEquals, formatDate, formatDateTime, formatNumber, hasData, isAllNumberOrLatin, isArray, isFunction, isObject, isString, split0, toDouble2CAfter, trimAll, validatePhoto } from '../../../helper/utils';
+import { ACTION, DIFFICULT, LANGUAGE, PAGE_LOCATION, LOCAL_STORAGE_KEY, COURSE_TYPE, PHOTO_ALLOWED_TYPE, PHOTO_MAXIMUM_SIZE_MB, RATIOS, PROMOTION_TYPE, COURSE_CERTIFICATE } from '../../../define/define';
 import { createOrUpdateCourse, getAllSector, getAllTopic, getCourseById, searchCourse, searchTag } from '../../../service/CourseService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faClock, faClose } from '@fortawesome/free-solid-svg-icons';
@@ -12,16 +11,9 @@ import Template2 from '../../../comp/CertificateTemplate/Template2';
 import Template3 from '../../../comp/CertificateTemplate/Template3';
 import Template4 from '../../../comp/CertificateTemplate/Template4';
 import React from "react";
-import { removePhoto, uploadTempPhoto } from "../../../service/PhotoService";
+import { removePhoto, uploadTempPhoto } from "../../../service/MediaService";
 import { hasUnsavedChangesStore } from "../../../store/HasUnsavedChangesStore";
 import AutocompleteInput from "../../../comp/AutocompleteInput";
-
-const certificateTemplates = [
-    { template: Template1, name: 'Mẫu 1', code: 'Template1' },
-    { template: Template2, name: 'Mẫu 2', code: 'Template2' },
-    { template: Template3, name: 'Mẫu 3', code: 'Template3' },
-    { template: Template4, name: 'Mẫu 4', code: 'Template4' }
-];
 
 const courseConstruct = () => ({
     difficult: 'BASIC',
@@ -35,36 +27,24 @@ const CreateOrUpdate = ({ action }) => {
     const [topics, setTopics] = useState([]);
     const [isAddNewTopic, setIsAddNewTopic] = useState(false);
     const [isAddNewSector, setIsAddNewSector] = useState(false);
-    const [isPreViewTemplateCer, setIsPreViewTemplateCer] = useState(false);
     const [inputTag, setInputTag] = useState('');
     const [inputKeyWord, setInputKeyWord] = useState('');
-    const [keyTemp, setKeyTemp] = useState('');
-    const [currentKeyTemp, setCurrentKeyTemp] = useState('');
     const [inputSuggestCourse, setInputSuggestCourse] = useState('')
     const [course, setCourse] = useState(courseConstruct());
-    const [lstTemp, setLstTemp] = useState({});
     const [errors, setErrors] = useState({})
     const [searchSuggestCourse, setSearchSuggestCourse] = useState([]);
     const [searchTagRs, setSearchTagRs] = useState([]);
     const navigate = useNavigate();
     const [params] = useSearchParams();
     const [dragging, setDragging] = useState(false)
+    const [current, setCurrent] = useState({});
 
     useEffect(() => {
         const title = action === ACTION.CREATE ? 'Tạo khóa học' : (action === ACTION.UPDATE && 'Cập nhật khóa học');
         if (isFunction(setTitle)) setTitle(title);
         if (isFunction(setControllers)) setControllers([{ name: 'Quản lý khóa học', url: PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE }, { name: title }]);
         if (action === ACTION.CREATE) {
-            const newKey = Date.now().toString();
-            setCurrentKeyTemp(newKey)
-            setKeyTemp(newKey)
-            let lstTempLocal = {};
-            try {
-                lstTempLocal = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY.COURSE_DATA_TEMP)) || {}
-            } catch { }
-            if (hasData(lstTempLocal))
-                lstTempLocal[newKey] = { ...course };
-            setLstTemp(lstTempLocal);
+            setCurrent(structuredClone(course));
         }
         const init = async () => {
             if (action === ACTION.UPDATE) {
@@ -81,9 +61,13 @@ const CreateOrUpdate = ({ action }) => {
                         return;
                     }
                     c.price = formatNumber(c.price);
-                    setLstTemp({ [c.id]: c });
-                    setKeyTemp(c.id);
-                    setCourse(c);
+                    if (c.promotionType === PROMOTION_TYPE.MONEY.id) {
+                        c.promotion = formatNumber(c.promotion) || 0
+                    } else if (c.promotionType === PROMOTION_TYPE.PERCENT.id) {
+                        c.promotion = toDouble2CAfter(c.promotion);
+                    }
+                    setCourse(structuredClone(c));
+                    setCurrent(structuredClone(c));
                     getAllTopic(response?.data?.data?.sector?.id)
                         .then(response => {
                             setTopics(response?.data?.data);
@@ -128,10 +112,9 @@ const CreateOrUpdate = ({ action }) => {
     }, [isAddNewTopic])
 
     useEffect(() => {
-        const initialData = lstTemp[keyTemp] || {};
-        const isDirty = !deepEquals(course, initialData);
+        const isDirty = !deepEquals(course, current);
         hasUnsavedChangesStore.set(isDirty);
-    }, [course, lstTemp, keyTemp]);
+    }, [course, current]);
 
     const handleSectorSelected = (e) => {
         const sector = sectors.find(s => s.id === e.target.value);
@@ -195,13 +178,13 @@ const CreateOrUpdate = ({ action }) => {
             return;
         }
 
-        openPopupResizeImage([RATIOS.LANDSCAPE_3_2] ,file, (newFile) => {
+        openPopupResizeImage([RATIOS.LANDSCAPE_3_2], file, true, (newFile) => {
             file = newFile;
             uploadTempPhoto([file])
                 .then(response => {
                     const photoResponse = response?.data?.data?.[0];
                     setCourse(prev => ({ ...prev, thumbnail: photoResponse.url, thumbnailId: photoResponse.id }));
-                }).catch(_ => {})
+                }).catch(_ => { })
         })
     };
 
@@ -218,6 +201,10 @@ const CreateOrUpdate = ({ action }) => {
             toast.error('Tag đã được thêm trước đó');
             return;
         }
+        if (course?.tags?.length === 10) {
+            toast.error('Tối đa 10 tags')
+            return
+        } 
         setCourse(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }))
         setInputTag('')
     }
@@ -229,65 +216,12 @@ const CreateOrUpdate = ({ action }) => {
             toast.error('Từ khóa đã được thêm trước đó');
             return;
         }
+        if (course?.lstRequiredKnowledge?.length === 10) {
+            toast.error('Tối đa 10 từ khóa')
+            return
+        } 
         setCourse(prev => ({ ...prev, lstRequiredKnowledge: [...(prev.lstRequiredKnowledge || []), newKeyWord] }))
         setInputKeyWord('')
-    }
-
-    const handleSaveTemp = () => {
-        if (ACTION.CREATE === action) {
-            const others = {}
-            Object.keys(lstTemp).forEach(key => {
-                if (key === currentKeyTemp) return;
-                others[key] = lstTemp[key];
-            })
-            others[keyTemp] = course;
-            setLstTemp(others)
-            localStorage.setItem(LOCAL_STORAGE_KEY.COURSE_DATA_TEMP, JSON.stringify(others))
-            toast.success('Lưu thành công!');
-            if (keyTemp === currentKeyTemp) {
-                const newKey = Date.now().toString();
-                setCurrentKeyTemp(newKey);
-                others[newKey] = courseConstruct()
-            } else
-                others[currentKeyTemp] = lstTemp[currentKeyTemp];
-            setLstTemp(others)
-        }
-    }
-
-    const handleRemoveTemp = (keyRemove, actionCreateTemp) => {
-        if (ACTION.CREATE === action && keyRemove !== currentKeyTemp) {
-            let index = -1;
-            const others = {}
-            const keys = Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a));
-            keys.filter((keyItem, i) => {
-                if (String(keyItem) === String(keyRemove)) index = i; return String(keyItem) !== String(keyRemove) && String(keyItem) !== String(currentKeyTemp);
-            })
-                .forEach(key => {
-                    others[key] = lstTemp[key];
-                })
-            localStorage.setItem(LOCAL_STORAGE_KEY.COURSE_DATA_TEMP, JSON.stringify(others))
-            if (actionCreateTemp !== true)
-                toast.success('Xóa thành công!');
-            others[currentKeyTemp] = lstTemp[currentKeyTemp];
-            if (String(keyRemove) === String(keyTemp)) {
-                const newKeyTemp = (keys[index + 1] || keys[index - 1] || keys[0]);
-                setKeyTemp(newKeyTemp)
-                setCourse(others[newKeyTemp])
-            }
-            setLstTemp(others)
-        }
-    }
-
-    const handleChangeTemp = (temp) => {
-        const excute = () => {
-            if (temp === keyTemp)
-                return;
-            setKeyTemp(temp);
-            setCourse({ ...lstTemp[temp] })
-            setErrors({});
-        }
-        if (hasUnsavedChangesStore.get() !== true || window.confirm('Bạn có thay đổi chưa lưu. Tiếp tục?'))
-            excute();
     }
 
     const isAddTagDisabled = () => {
@@ -301,7 +235,18 @@ const CreateOrUpdate = ({ action }) => {
     }
 
     const handlerSave = () => {
-        const params = trimAll({ ...course });
+        const params = structuredClone(trimAll({ ...course }));
+        if (hasData(params.price))
+            params.price = Array.from(String(params.price)?.split(''))?.filter(item => item >= '0' && item <= '9')?.join('')
+        if (hasData(params.promotionType)) {
+            params.promotion = Array.from(String(params.promotion)?.split(''))?.filter(item => item >= '0' && item <= '9')?.join('')
+        } else {
+            params.promotion = undefined;
+            params.promotionType = undefined;
+        }
+        if (hasData(params.suggestCourses))
+            params.suggestCourses = params.suggestCourses.map(c => c.id);
+        console.log(params)
         const errors = validateSave(params);
         setErrors(errors)
         if (Object.values(errors)?.length > 0) {
@@ -314,10 +259,6 @@ const CreateOrUpdate = ({ action }) => {
             );
             return
         }
-        if (hasData(params.price))
-            params.price = Array.from(params.price?.split(''))?.filter(item => item >= '0' && item <= '9')?.join('')
-        if (hasData(params.suggestCourses))
-            params.suggestCourses = params.suggestCourses.map(c => c.id);
         openPopupConfirmAlert({
             type: 'warning',
             title: 'Xác nhận cập nhật',
@@ -327,19 +268,11 @@ const CreateOrUpdate = ({ action }) => {
                     .then(_ => {
                         toast.success(action === ACTION.CREATE ? 'Thêm thành công' : 'Cập nhật thành công')
                         if (ACTION.UPDATE === action) {
-                            setLstTemp(prev => ({ ...prev, [keyTemp]: course }))
+                            setCurrent(structuredClone(course));
                         } else {
                             const newCourse = courseConstruct();
-                            if (keyTemp === currentKeyTemp) {
-                                const newKey = Date.now().toString();
-                                const { [keyTemp]: _, ...others } = { ...(lstTemp || {}) };
-                                setCurrentKeyTemp(newKey)
-                                setKeyTemp(newKey)
-                                setCourse(newCourse);
-                                others[newKey] = newCourse;
-                                setLstTemp(others);
-                            } else
-                                handleRemoveTemp(keyTemp, true)
+                            setCourse(structuredClone(newCourse));
+                            setCurrent(structuredClone(newCourse));
                         }
                     })
                     .catch(_ => { })
@@ -380,6 +313,11 @@ const CreateOrUpdate = ({ action }) => {
                 errors.newTopicName = 'Tên Chủ đề/ danh mục không được quá 100 ký tự!';
         }
 
+        if (!hasData(course?.professorName))
+            errors.professorName = 'Tên giám đốc đào tạo không được để trống!'
+        else if (course.professorName.length > 100)
+            errors.professorName = 'Tên giám đốc đào tạo không được quá 100 ký tự!';
+
         if (!hasData(course?.description))
             errors.description = 'Mô tả ngắn không được để trống!';
         else if (course?.description.length > 300)
@@ -393,16 +331,52 @@ const CreateOrUpdate = ({ action }) => {
 
         if (!hasData(course?.type))
             errors.type = 'Loại khóa học không được để trống!'
-        else if (course.type === 'PAID' && !hasData(course?.price))
-            errors.price = 'Giá khóa học không được để trống!'
+        else if (course.type === 'PAID') {
+            const price = parseFloat(course?.price);
+            if (!hasData(price))
+                errors.price = 'Giá khóa học không được để trống!'
+            else if (price <= 0.0)
+                errors.price = 'Giá khóa học không được bé hơn hoặc bằng 0'
+            else if (String(parseInt(price)).length > 16)
+                errors.price = 'Gía khóa học tối đa 16 ký tự'
+            if (hasData(course?.promotionType)) {
+                const promotion = parseFloat(course?.promotion)
+                if (!hasData(promotion))
+                    errors.promotion = 'Khuyến mại không được để trống'
+                else if (promotion < 0)
+                    errors.promotion = 'Khuyến mại không được bé hơn 0'
+                else {
+                    if (course.promotionType === PROMOTION_TYPE.MONEY.id) {
+                        if (String(parseInt(promotion)).length > 16)
+                            errors.promotion = 'Khuyến mại tối đa 16 ký tự'
+                        else if (promotion > price)
+                            errors.promotion = 'Khuyến mại không được lớn hơn giá sản phẩm'
+                    } else if (course.promotionType === PROMOTION_TYPE.PERCENT.id) {
+                        if (promotion > 100)
+                            errors.promotion = 'Khuyến mại không được lớn hơn 100%'
+                    }
+                }
+            }
+        }
 
         if (course?.issuingCertificate === true) {
-            if (!hasData(course?.certificate?.template))
-                errors.certificateTemplate = 'Mẫu chứng chỉ không được để trống!'
-            if (!hasData(course?.certificate?.professorName))
-                errors.certificateProfessorName = 'Tên giám đốc đào tạo không được để trống!'
-            else if (course.certificate.professorName.length > 100)
-                errors.certificateProfessorName = 'Tên giám đốc đào tạo không được quá 100 ký tự!';
+            if (!hasData(course?.templateCertificate))
+                errors.templateCertificate = 'Mẫu chứng chỉ không được để trống!'
+        }
+
+        if (!course?.tags?.length) {
+            errors.tags = 'Kiến thức đạt được tối thiểu 1 từ khóa'
+        }
+        else if (course?.tags?.length > 10) {
+            errors.tags = 'Kiến thức đạt được tối đa 10 từ khóa'
+        }
+
+        if (course?.suggestCourses?.length > 10) {
+            errors.suggestCourses = 'Tối đa 10 khóa học gợi ý'
+        }
+        
+        if (course?.lstRequiredKnowledge?.length > 10) {
+            errors.lstRequiredKnowledge = 'Kiến thức cần có tối đa 10 từ khóa'
         }
 
         return errors;
@@ -420,6 +394,10 @@ const CreateOrUpdate = ({ action }) => {
 
     const handleAddSuggestCourse = () => {
         if (isObject(inputSuggestCourse)) {
+            if (course?.suggestCourses?.length > 10) {
+                toast.error("Tối đa 10 gợi ý khóa học");
+                return
+            }
             setCourse(prev => ({ ...prev, suggestCourses: [...(prev.suggestCourses || []), inputSuggestCourse] }))
             setInputSuggestCourse('');
         }
@@ -451,28 +429,6 @@ const CreateOrUpdate = ({ action }) => {
                 <FontAwesomeIcon icon={faArrowLeft} />
                 <span>Danh sách</span>
             </button>
-
-            {ACTION.CREATE === action && hasData(lstTemp) && <>
-                <hr className="my-4"></hr>
-                <div className="p-4 bg-white border rounded-xl h-auto max-w-3xl w-full">
-                    <h3 className="font-semibold uppercase section-title">Các bản nháp trước đó</h3>
-                    <div className="flex flex-col mt-2 gap-1">
-                        {Object.keys(lstTemp).sort((a, b) => Number(b) - Number(a)).map((temp, index) => {
-                            const courseTemp = lstTemp[temp];
-                            return <React.Fragment key={index}>
-                                {index > 0 && <hr />}
-                                <button onClick={() => handleChangeTemp(temp)} type="button" className={`py-2 px-4 text-start hover:bg-gray-100 flex flex-row items-center justify-between rounded-lg ${keyTemp === temp && '!bg-[var(--color-background-secondary)]'}`}>
-                                    <span className="max-w-full overflow-hidden text-ellipsis text-nowrap">
-                                        <FontAwesomeIcon icon={faClock} className="me-2" />
-                                        <span>{formatDateTime(new Date(Number(temp)))} {courseTemp?.name && '-'} {courseTemp?.name || ''}</span>
-                                    </span>
-                                    {currentKeyTemp !== temp && <FontAwesomeIcon onClick={(e) => { e.stopPropagation(); handleRemoveTemp(temp) }} icon={faClose} className="ms-2 hover:text-red-600 float-end" />}
-                                </button>
-                            </React.Fragment>
-                        })}
-                    </div>
-                </div>
-            </>}
         </div>
         {(action === ACTION.CREATE || (action === ACTION.UPDATE && hasData(course?.id))) && <div className="p-4 bg-white rounded-xl border">
             <div className="page-header pb-4 mb-4">
@@ -487,21 +443,21 @@ const CreateOrUpdate = ({ action }) => {
                 <div className="form-grid gap-4">
                     <div className="field form-full">
                         <span className='flex flex-row'>
-                            <label>Mã khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
+                            <label>Mã khóa học <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
                         </span>
                         <input className={`${errors?.code && '!border-red-600'}`} max={100} type="text" id="f-code" placeholder="Ví dụ: KH01"
                             value={course?.code || ''} onChange={(e) => setCourse(prev => ({ ...prev, code: e.target.value }))} />
                     </div>
                     <div className="field form-full">
                         <span className='flex flex-row'>
-                            <label>Tên khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
+                            <label>Tên khóa học <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
                         </span>
                         <input className={`${errors?.name && '!border-red-600'}`} max={100} type="text" id="f-name" placeholder="Ví dụ: Lập trình Python từ cơ bản đến nâng cao"
                             value={course?.name || ''} onChange={(e) => setCourse(prev => ({ ...prev, name: e.target.value }))} />
                     </div>
-                    <div className="field">
+                    <div className="field form-full @sm:!col-span-1">
                         <label>
-                            Lĩnh vực <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span>
+                            Lĩnh vực <span style={{ color: "var(--color-text-danger)" }}>*</span>
                             <span className='ms-2 space-x-1'>
                                 <input id='check-add-new-sector' className='!w-3 !h-3 !outline-none' type='checkbox' checked={isAddNewSector === true} value={isAddNewSector || ''} onChange={(e) => setIsAddNewSector(prev => !prev)} />
                                 <label htmlFor='check-add-new-sector' className='text-sm'>Thêm mới</label>
@@ -511,11 +467,11 @@ const CreateOrUpdate = ({ action }) => {
                             <option value="">-- Chọn lĩnh vực --</option>
                             {sectors?.map((sector, index) => <option key={index} value={sector.id || ''}>{sector.name}</option>)}
                         </select>}
-                        {isAddNewSector === true && <input className={errors?.newSectorName && '!border-red-600'} placeholder='Nhập tên lĩnh vực mới' value={course?.newSectorName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newSectorName: e.target.value }))} />}
+                        {isAddNewSector === true && <input maxLength={100} className={errors?.newSectorName && '!border-red-600'} placeholder='Nhập tên lĩnh vực mới' value={course?.newSectorName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newSectorName: e.target.value }))} />}
                     </div>
-                    <div className="field">
+                    <div className="field form-full @sm:!col-span-1">
                         <label>
-                            Chủ đề / Danh mục <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span>
+                            Chủ đề / Danh mục <span style={{ color: "var(--color-text-danger)" }}>*</span>
                             <span className='ms-2 space-x-1'>
                                 <input id='check-add-new-topic' className='!w-3 !h-3 !outline-none' type='checkbox' disabled={isAddNewSector === true} checked={isAddNewTopic === true} value={isAddNewTopic || ''} onChange={(e) => setIsAddNewTopic(prev => !prev)} />
                                 <label htmlFor='check-add-new-topic' className='text-sm'>Thêm mới</label>
@@ -525,11 +481,18 @@ const CreateOrUpdate = ({ action }) => {
                             <option value="">-- Chọn chủ đề --</option>
                             {topics?.map((topic, index) => <option key={index} value={topic.id || ''}>{topic.name}</option>)}
                         </select>}
-                        {isAddNewTopic === true && <input className={errors?.newTopicName && '!border-red-600'} placeholder='Nhập tên chủ đề/danh mục mới' value={course?.newTopicName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newTopicName: e.target.value }))} />}
+                        {isAddNewTopic === true && <input maxLength={100} className={errors?.newTopicName && '!border-red-600'} placeholder='Nhập tên chủ đề/danh mục mới' value={course?.newTopicName || ''} onChange={(e) => setCourse(prev => ({ ...prev, newTopicName: e.target.value }))} />}
                     </div>
                     <div className="field form-full">
-                        <label>Mô tả ngắn <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
-                        <textarea className={errors?.description && '!border-red-600'} id="f-desc" maxLength={300} value={course?.description || ''} placeholder="Mô tả tổng quan về khóa học, nội dung học viên sẽ được học..."
+                        <span className='flex flex-row'>
+                            <label>Giảng viên <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
+                        </span>
+                        <input type="text" placeholder="Nhập tên giám đốc đào tạo" maxLength={100} className={errors?.professorName && '!border-red-600'}
+                            value={course?.professorName || ''} onChange={(e) => setCourse(prev => ({ ...prev, professorName: e.target.value }))} />
+                    </div>
+                    <div className="field form-full">
+                        <label>Mô tả ngắn <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
+                        <textarea value={course?.description || ''} className={errors?.description && '!border-red-600'} id="f-desc" maxLength={300} placeholder="Mô tả tổng quan về khóa học, nội dung học viên sẽ được học..."
                             onChange={(e) => setCourse(prev => ({ ...prev, description: e.target.value }))}></textarea>
                         <span className="hint">Tối đa 300 ký tự. Hiển thị trên trang danh sách khóa học.</span>
                     </div>
@@ -552,33 +515,48 @@ const CreateOrUpdate = ({ action }) => {
                     </div>
 
                     <div className="field form-full">
-                        <label>Độ khó <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
-                        <div className="difficulty-group grid grid-cols-4">
+                        <label>Độ khó <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
+                        <div className="difficulty-group grid grid-cols-2 @sm:grid-cols-4">
                             {Object.keys(DIFFICULT).map((diffKey, index) => <button type="button" key={index} className={`diff-btn btn-secondary w-full ${diffKey === course?.difficult ? 'active' : ''}`} onClick={() => setCourse(prev => ({ ...prev, difficult: diffKey }))}>{DIFFICULT[diffKey]}</button>)}
                         </div>
                     </div>
                     <div className="field form-full">
-                        <label>Ngôn ngữ giảng dạy <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
+                        <label>Ngôn ngữ giảng dạy <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
                         <div className="lang-badges">
                             {Object.keys(LANGUAGE).map((lanKey, index) => <button type="button" key={index} className={`btn-secondary lang-badge ${course?.language === lanKey && 'selected'}`} onClick={() => setCourse(prev => ({ ...prev, language: lanKey }))}>{LANGUAGE[lanKey]}</button>)}
                         </div>
                     </div>
-                    <div className="field">
-                        <label>Loại khóa học <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
-                        <div className="price-toggle">
-                            <button type="button" className={`pt-btn ${course?.type === 'FREE' && 'active'} hover:bg-white`} id="pt-free" onClick={() => setCourse(prev => ({ ...prev, type: 'FREE', price: undefined }))}>Miễn phí</button>
-                            <button type="button" className={`pt-btn ${course?.type === 'PAID' && 'active'} hover:bg-white`} id="pt-paid" onClick={() => setCourse(prev => ({ ...prev, type: 'PAID' }))}>Có phí</button>
+                    <div className="form-full grid-cols-3 grid gap-2">
+                        <div className="field !col-span-3 @sm:!col-span-1">
+                            <label>Loại khóa học <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
+                            <div className="price-toggle">
+                                <button type="button" className={`pt-btn ${course?.type === 'FREE' && 'active'} hover:bg-white`} id="pt-free" onClick={() => setCourse(prev => ({ ...prev, type: 'FREE', price: undefined, promotionType: undefined, promotion: undefined }))}>Miễn phí</button>
+                                <button type="button" className={`pt-btn ${course?.type === 'PAID' && 'active'} hover:bg-white`} id="pt-paid" onClick={() => setCourse(prev => ({ ...prev, type: 'PAID' }))}>Có phí</button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="field" id="price-field" disabled>
-                        <label>Giá (VNĐ) {course?.type === 'PAID' && <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span>}</label>
-                        <input value={course?.price || ''} maxLength={18} onChange={(e) => {
-                            setCourse(prev => ({ ...prev, price: formatNumber(e.target.value.replace(/[^0-9]/g, '')) }));
-                        }} inputMode="numeric" pattern="[0-9]*" type="text" id="f-price" className={`disabled:opacity-60 transition-all ${errors?.price && '!border-red-600'}`} placeholder="Ví dụ: 500,000" min="0" disabled={course?.type === 'FREE'} />
+                        <div className="field !col-span-3 @sm:!col-span-1">
+                            <label>Giá (VNĐ) {course?.type === 'PAID' && <span style={{ color: "var(--color-text-danger)" }}>*</span>}</label>
+                            <input value={course?.price || ''} maxLength={18} onChange={(e) => {
+                                setCourse(prev => ({ ...prev, price: formatNumber(e.target.value.replace(/[^0-9]/g, '')) }));
+                            }} inputMode="numeric" pattern="[0-9]*" type="text" className={`disabled:opacity-60 transition-all ${errors?.price && '!border-red-600'}`} placeholder="Ví dụ: 500,000" min="0" disabled={course?.type === 'FREE'} />
+                        </div>
+                        <div className="!col-span-3 @sm:!col-span-1 field">
+                            <label>Khuyến mại {course?.promotionType && <span style={{ color: "var(--color-text-danger)" }}>*</span>}</label>
+                            <div className={`border-[1px] border-color-secondary rounded-lg flex flex-row flex-nowrap items-center ${!(course.type === 'PAID') && 'opacity-60'} ${(errors?.promotion || errors?.promotionType) && '!border-red-600'}`}>
+                                <input disabled={!course.promotionType || !(course.type === 'PAID')} value={course?.promotion || ''} max={course.promotionType === PROMOTION_TYPE.PERCENT.id ? 100 : undefined} maxLength={course.promotionType === PROMOTION_TYPE.PERCENT.id ? 3 : 16} onChange={(e) => {
+                                    setCourse(prev => { const promotion = e.target.value.replace(/[^0-9]/g, ''); return ({ ...prev, promotion: prev.promotionType === PROMOTION_TYPE.MONEY.id ? formatNumber(promotion) : (promotion > 100 ? prev.promotion : (split0(promotion))) }); });
+                                }} inputMode="numeric" pattern="[0-9]*" type="text" className={`disabled:opacity-60 transition-all !border-none !h-[38px] !outline-none !shadow-none w-full`} placeholder="100" min="1" />
+                                <div className="border-l border-color-secondary !h-[20px]"></div>
+                                <select value={course.promotionType || ''} className=" !h-[38px] !border-none !w-auto disabled:opacity-60 !outline-none !shadow-none" disabled={!(course.type === 'PAID')} onChange={e => setCourse(prev => ({...prev, promotionType: e.target.value}))}>
+                                    <option value=''>Unit</option>
+                                    {Object.values(PROMOTION_TYPE).map((type, index) => <option key={index} value={type.id}>{type?.label}</option>)}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div className="field form-full">
                         <div className="cert-toggle">
-                            <button type="button" className={`toggle-sw ${course?.issuingCertificate === true && 'on'}`} id="cert-sw" onClick={() => { setCourse(prev => ({ ...prev, issuingCertificate: !prev.issuingCertificate, certificate: { id: prev.certificate?.id, template: certificateTemplates[0].code } })); setIsPreViewTemplateCer(false) }}></button>
+                            <button type="button" className={`toggle-sw ${course?.issuingCertificate === true && 'on'}`} id="cert-sw" onClick={() => { setCourse(prev => ({ ...prev, issuingCertificate: !prev.issuingCertificate, templateCertificate: COURSE_CERTIFICATE[0].code })); }}></button>
                             <div>
                                 <div className="toggle-label">Cấp chứng chỉ hoàn thành</div>
                                 <div className="toggle-sub">Học viên nhận chứng chỉ sau khi hoàn tất khóa học</div>
@@ -589,30 +567,22 @@ const CreateOrUpdate = ({ action }) => {
             </div>
 
             {course?.issuingCertificate === true && <div className="section-card mb-4 p-4">
-                <div className="section-title section-color-4 ">Chứng chỉ khóa học {course?.certificate?.template && <button type='button' className='text-sm font-medium text-blue-500 hover:text-blue-600 hover:underline' onClick={() => setIsPreViewTemplateCer(prev => !prev)}>Xem trước</button>}</div>
+                <div className="section-title section-color-4 ">Chứng chỉ khóa học</div>
                 <div className="form-grid gap-4">
-                    {isPreViewTemplateCer && course?.certificate?.template && <div className='form-full'>
-                        {certificateTemplates.filter((template) => template.code === course?.certificate?.template).map((template, index) => {
-                            return <div key={index}>{<template.template professorFullName={course?.certificate?.professorName} courseName={course?.name} issueDate={formatDate(new Date())} />}</div>
+                    {course?.templateCertificate && <div className='form-full'>
+                        {COURSE_CERTIFICATE.filter((template) => template.code === course?.templateCertificate).map((template, index) => {
+                            return <div key={index}>{<template.template professorFullName={course?.professorName} courseName={course?.name} issueDate={formatDate(new Date())} />}</div>
                         })}
                     </div>}
                     <div className="field form-full">
-                        <label>Chọn mẫu chứng chỉ <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
+                        <label>Chọn mẫu chứng chỉ <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
                         <div className="flex w-full flex-wrap space-x-2">
-                            {certificateTemplates.map((template, index) => {
-                                return <button type='button' htmlFor={`certificateTemplate-${index}`} key={index} className={`diff-btn space-x-2 text-center p-2 w-1/4 ${course?.certificate?.template === template.code && 'active'}`} onClick={() => setCourse(prev => ({ ...prev, certificate: { ...prev.certificate, template: template.code } }))}>
+                            {COURSE_CERTIFICATE.map((template, index) => {
+                                return <button type='button' htmlFor={`certificateTemplate-${index}`} key={index} className={`diff-btn space-x-2 text-center p-2 w-1/4 ${course?.templateCertificate === template.code && 'active'}`} onClick={() => setCourse(prev => ({ ...prev, templateCertificate: template.code }))}>
                                     <span>{template.name}</span>
-                                    <span onClick={() => setIsPreViewTemplateCer(true)} type='button' className='text-blue-500 hover:underline hover:text-blue-600'>Xem</span>
                                 </button>
                             })}
                         </div>
-                    </div>
-                    <div className="field form-full">
-                        <span className='flex flex-row'>
-                            <label>Giám đốc đào tạo <span style={{ color: "var(--color-text-danger,#E24B4A)" }}>*</span></label>
-                        </span>
-                        <input type="text" placeholder="Nhập tên giám đốc đào tạo" className={errors?.certificateProfessorName && '!border-red-600'}
-                            value={course?.certificate?.professorName || ''} onChange={(e) => setCourse(prev => ({ ...prev, certificate: { ...prev.certificate, professorName: e.target.value } }))} />
                     </div>
                 </div>
             </div>}
@@ -623,9 +593,9 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Từ khóa</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                            <div className={`gap-1 p-1 border border-color-secondary flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-color-primary focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] ${errors?.lstRequiredKnowledge && '!border-red-600'}`}>
                                 {course?.lstRequiredKnowledge?.map((inputKeyWord, index) => {
-                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 ms-1 flex flex-row flex-nowrap items-center`}>
+                                    return <div key={index} className={`p-1 border border-color-secondary rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={inputKeyWord}>
                                             <span className='text-nowrap'>{inputKeyWord}</span>
                                         </div>
@@ -653,9 +623,9 @@ const CreateOrUpdate = ({ action }) => {
                     <div className="field form-full">
                         <label>Gợi ý khóa học</label>
                         <div className="tag-input-row">
-                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                            <div className={`gap-1 p-1 border border-color-secondary flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-color-primary focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] ${errors?.suggestCourses && '!border-red-600'}`}>
                                 {course?.suggestCourses?.map((suggestItem, index) => {
-                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
+                                    return <div key={index} className={`p-1 border border-color-secondary rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={suggestItem.code + ' - ' + suggestItem.name}>
                                             <span className='text-nowrap'>{suggestItem.code + ' - ' + suggestItem.name}</span>
                                         </div>
@@ -689,14 +659,14 @@ const CreateOrUpdate = ({ action }) => {
             </div>
 
             <div className="section-card mb-4 p-4">
-                <div className="section-title section-color-4 ">Tags</div>
+                <div className="section-title section-color-4 ">Kiến thức đạt được </div>
                 <div className="form-grid gap-4">
                     <div className="field form-full">
-                        <label>Tags khóa học</label>
+                        <label>Từ khóa <span style={{ color: "var(--color-text-danger)" }}>*</span></label>
                         <div className="tag-input-row">
-                            <div className='gap-1 p-1 border border-[var(--color-border-secondary)] flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-[var(--color-border-primary)] focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]'>
+                            <div className={`gap-1 p-1 border border-color-secondary flex flex-row items-center flex-wrap rounded-lg w-full focus-within:border-color-primary focus-within:shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] ${errors?.tags && '!border-red-600'}`}>
                                 {course?.tags?.map((tagItem, index) => {
-                                    return <div key={index} className={`p-1 border border-[var(--color-border-secondary)] rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
+                                    return <div key={index} className={`p-1 border border-color-secondary rounded-md space-x-1 flex flex-row flex-nowrap items-center`}>
                                         <div className='text-ellipsis overflow-hidden max-w-20' title={tagItem}>
                                             <span className='text-nowrap'>{tagItem}</span>
                                         </div>
@@ -710,7 +680,7 @@ const CreateOrUpdate = ({ action }) => {
                                     lst={searchTagRs}
                                     value={inputTag}
                                     setValue={setInputTag}
-                                    placeholder={'Nhập tag rồi nhấn thêm'}
+                                    placeholder={'Nhập từ khóa rồi nhấn thêm'}
                                     getValueItem={(item) => item}
                                     displayItem={(item) => item}
                                     optionShowList={searchTagRs?.length > 0}
@@ -720,16 +690,12 @@ const CreateOrUpdate = ({ action }) => {
                                 <button type="button" className='disabled:opacity-60 disabled:pointer-events-none' disabled={isAddTagDisabled()} onClick={handleAddTag}>+ Thêm</button>
                             </div>
                         </div>
-                        <span className="hint">Thêm tối đa 10 tags để giúp học viên tìm kiếm dễ hơn</span>
                     </div>
                 </div>
             </div>
 
-            <div className="action-bar !p-4">
-                <div className="action-left">
-                    {action === ACTION.CREATE && <button type="button" onClick={handleSaveTemp} className="btn-secondary" >Lưu nháp</button>}
-                </div>
-                <button type="button" onClick={handlerSave} disabled={deepEquals(course, lstTemp[keyTemp])} className="btn-primary !bg-gray-900 hover:!bg-gray-800 disabled:cursor-default disabled:!opacity-60 disabled:!bg-gray-900" >{ACTION.CREATE === action ? 'Tạo khóa học' : 'Cập nhật khóa học'}</button>
+            <div className="action-bar !p-4 !justify-end">
+                <button type="button" onClick={handlerSave} disabled={deepEquals(course, current)} className="btn-primary !bg-gray-900 hover:!bg-gray-800 disabled:cursor-default disabled:!opacity-60 disabled:!bg-gray-900" >{ACTION.CREATE === action ? 'Tạo khóa học' : 'Cập nhật khóa học'}</button>
             </div>
         </div>}
     </div>

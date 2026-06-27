@@ -60,7 +60,7 @@
 
 /* Image */
 .tiptap-editor .ProseMirror img {
-  @apply max-w-full rounded-lg my-3 ring-1 ring-gray-300;
+  @apply max-w-full rounded-sm my-2 ring-1 ring-gray-300;
 }
 
 .tiptap-editor .ProseMirror img.ProseMirror-selectednode {
@@ -73,7 +73,8 @@
 }
 
 .tiptap-editor .ProseMirror img.text-center {
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tiptap-editor .ProseMirror img.text-right {

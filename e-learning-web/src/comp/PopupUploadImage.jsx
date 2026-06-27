@@ -29,11 +29,13 @@ const PopupUploadImage = ({ open, onClose, onInsert, openPopupConfirmAlert, open
     handleFile(e.dataTransfer.files[0]);
   };
 
-  const handleInsert = () => {
+  const handleInsert = async () => {
     if (!preview) return;
-    onInsert?.(fileRef.current.files[0]);
-    reset();
-    onClose?.();
+    try {
+      await onInsert?.(fileRef.current.files[0]);
+      reset();
+      onClose?.();
+    } catch (e) {}
   };
 
   const reset = () => {
@@ -53,11 +55,10 @@ const PopupUploadImage = ({ open, onClose, onInsert, openPopupConfirmAlert, open
   }
 
   const openPopupResize = () => {
-    openPopupResizeImage?.(Object.values(RATIOS).slice(0, -1), fileRef.current.files[0], (newFile) => {
+    openPopupResizeImage?.(Object.values(RATIOS).slice(0, -1), fileRef.current.files[0], false, (newFile) => {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(newFile);
       fileRef.current.files = dataTransfer.files;
-      handleFile(newFile)
     })
   }
 

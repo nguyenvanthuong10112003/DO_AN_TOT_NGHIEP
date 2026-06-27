@@ -17,12 +17,15 @@ import AdminHome from './admin/page/Home';
 import UserInfo from './page/user/Info';
 import ChangePassword from './page/user/ChangePw';
 import Forget from './page/auth/Forget';
-import CourseCreate from './admin/page/course/Create';
-import CourseIndex from './admin/page/course/Index';
+import AdminCourseCreate from './admin/page/course/Create';
+import AdminCourseIndex from './admin/page/course/Index';
 import { ThemeProvider } from '@material-tailwind/react';
-import CourseUpdate from './admin/page/course/Update';
-import CourseDetail from './admin/page/course/Detail';
-import LessonIndex from './admin/page/course/lesson/Index';
+import AdminCourseUpdate from './admin/page/course/Update';
+import AdminCourseDetail from './admin/page/course/Detail';
+import AdminLessonIndex from './admin/page/course/lesson/Index';
+import CourseIndex from './page/course/Index';
+import CourseDetail from './page/course/Detail';
+import LearnLesson from './page/course/Lesson';
 
 const router = createBrowserRouter([
   {
@@ -49,11 +52,11 @@ const router = createBrowserRouter([
                   { 
                     path: 'course', 
                     children: [
-                      { index: true, element: <CourseIndex />},
-                      { path: 'create', element: <CourseCreate /> },
-                      { path: 'update', element: <CourseUpdate />},
-                      { path: ':courseId', element: <CourseDetail /> },
-                      { path: ':courseId/lesson', element: <LessonIndex /> }
+                      { index: true, element: <AdminCourseIndex />},
+                      { path: 'create', element: <AdminCourseCreate /> },
+                      { path: 'update', element: <AdminCourseUpdate />},
+                      { path: ':courseId', element: <AdminCourseDetail /> },
+                      { path: ':courseId/lesson', element: <AdminLessonIndex /> }
                     ] 
                   }, 
                 ]
@@ -65,6 +68,7 @@ const router = createBrowserRouter([
       {
         path: '/',
         children: [
+          // Client routes
           {
             path: 'auth',
             element: <UnProtectedRoute />,
@@ -75,7 +79,6 @@ const router = createBrowserRouter([
               { path: 'forget', element: <Forget /> }
             ],
           },
-          // Client routes
           {
             element: <ProtectedRouteClient />,
             children: [
@@ -91,9 +94,20 @@ const router = createBrowserRouter([
                       { path: PAGE_LOCATION.USER_INFO, element: <UserInfo /> },
                       { path: PAGE_LOCATION.USER_CHANGE_PW, element: <ChangePassword /> },
                     ]
+                  }, 
+                  {
+                    path: 'course',
+                    children: [
+                      { index: true, element: <CourseIndex /> },
+                      { path: ':courseId', element: <CourseDetail /> }
+                    ]
                   }
                 ],
               },
+              {
+                path: `course/:courseId/learn`, 
+                element: <LearnLesson />
+              }
             ],
           }
         ]

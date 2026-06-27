@@ -2,9 +2,9 @@ import { PAGE_LOCATION, USER_ROLE } from "../define/define";
 import { checkUserWithRoles } from "../helper/utils";
 
 const Footer = ({}) => {
-    return <footer className="bg-neutral-primary-soft rounded-base shadow-xs border-t border-default bg-white">
+    return <footer className="@container bg-neutral-primary-soft rounded-base shadow-xs border-t border-color-tertiary bg-white">
         <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
-            <div className="sm:flex sm:items-center sm:justify-between flex-col xs:flex-row flex-wrap">
+            <div className="sm:flex sm:items-center sm:justify-between flex-col @xs:flex-row flex-wrap">
                 <a href={checkUserWithRoles([USER_ROLE.ADMIN]) ? PAGE_LOCATION.ADMIN : PAGE_LOCATION.HOME} className="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse">
                     <img src="/logo128.png" className="h-7" alt="Logo" />
                     <span className="text-heading self-center text-2xl font-semibold whitespace-nowrap">

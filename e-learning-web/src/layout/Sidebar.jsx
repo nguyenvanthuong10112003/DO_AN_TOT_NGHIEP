@@ -26,14 +26,16 @@ import {
 import { logout } from "../service/AuthService";
 import { checkUserWithRoles, handlerLogoutSuccess, hasRole, isBoolean } from "../helper/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleInfo, faCog, faMars, faSignOutAlt, faVenus } from "@fortawesome/free-solid-svg-icons";
+import { faBookBookmark, faBookmark, faCircleInfo, faClipboardCheck, faCog, faDiagramProject, faFolderOpen, faFolderTree, faGraduationCap, faLayerGroup, faMapLocationDot, faMars, faRectangleList, faRoad, faRoute, faSignOutAlt, faSignsPost, faTimeline, faUserGraduate, faVenus } from "@fortawesome/free-solid-svg-icons";
 import { PAGE_LOCATION, USER_ROLE } from "../define/define";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { hasUnsavedChangesStore } from "../store/HasUnsavedChangesStore";
+import { BookIcon, BookMinusIcon, BookOpenIcon, GraduationCapIcon, LibraryBigIcon, LibraryIcon } from "lucide-react";
 
-const Sidebar = ({ isOpenSideBar, currentUser }) => {
+const Sidebar = ({ isOpenSideBar, currentUser, statistic }) => {
   const [opens, setOpens] = React.useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
   useEffect(() => {
     setOpens([]);
   }, [isOpenSideBar])
@@ -58,9 +60,9 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
   }
 
   return (
-    <Card className={`w-full max-w-full !rounded-none md:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
+    <Card className={`w-full max-w-full !rounded-none sm:max-w-[20rem] p-4 h-[100vh] pt-16 z-10 fixed top-0 shadow-none border border-color-tertiary transition-all duration-500 ease-in-out flex-col justify-between ${isOpenSideBar ? 'left-0' : '-left-full'}`}>
       <List className="overflow-auto border-b sm:border-b-0">
-        <Accordion
+        {/* <Accordion
           open={opens.includes(1)}
           icon={
             <ChevronDownIcon
@@ -148,42 +150,65 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
             </List>
           </AccordionBody>
         </Accordion>
-        <hr className="my-2 border-blue-gray-50" />
-        <ListItem className="hover:bg-gray-100 rounded-lg">
+        <hr className="my-2 border-blue-gray-50" /> */}
+        {hasRole(USER_ROLE.ADMIN) && <ListItem className={`hover:bg-gray-100 rounded-lg ${(location.pathname + '/').startsWith(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE + '/') ? 'bg-gray-100' : ''}`} onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
           <ListItemPrefix>
-            <InboxIcon className="h-5 w-5" />
+            <FontAwesomeIcon icon={faLayerGroup} className="h-6 w-6" />
           </ListItemPrefix>
           <span className="ml-2 font-semibold">
-            Inbox
+            Quản lý khóa học
           </span>
           <ListItemSuffix>
-            <Chip value="14" size="sm" variant="ghost" color="blue-gray" className="rounded-full" />
+            <Chip value={statistic?.countCourses || 0} size="sm" className="rounded-full bg-gray-700 w-6 h-6 flex items-center justify-center font-medium !text-xs ms-2" />
           </ListItemSuffix>
-        </ListItem>
-        <ListItem className="hover:bg-gray-100 rounded-lg">
-          <ListItemPrefix>
-            <UserCircleIcon className="h-5 w-5" />
-          </ListItemPrefix>
-          <span className="ml-2 font-semibold">
-            Profile
-          </span>
-        </ListItem>
-        <ListItem className="hover:bg-gray-100 rounded-lg">
-          <ListItemPrefix>
-            <Cog6ToothIcon className="h-5 w-5" />
-          </ListItemPrefix>
-          <span className="ml-2 font-semibold">
-            Settings
-          </span>
-        </ListItem>
-        <ListItem className="hover:bg-gray-100 rounded-lg" onClick={handlerLogout}>
-          <ListItemPrefix>
-            <PowerIcon className="h-5 w-5" />
-          </ListItemPrefix>
-          <span className="ml-2 font-semibold">
-            Log Out
-          </span>
-        </ListItem>
+        </ListItem>}
+        {hasRole(USER_ROLE.USER) && <>
+          <ListItem className={`hover:bg-gray-100 rounded-lg ${(location.pathname + '/').startsWith(PAGE_LOCATION.USER_COURSE_INDEX + '/') ? 'bg-gray-100' : ''}`} onClick={() => navigate(PAGE_LOCATION.USER_COURSE_INDEX)}>
+            <ListItemPrefix>
+              <FontAwesomeIcon icon={faLayerGroup} className="h-6 w-6" />
+            </ListItemPrefix>
+            <span className="ml-2 font-semibold">
+              Danh sách khóa học
+            </span>
+            <ListItemSuffix>
+              <Chip value={statistic?.countCourses || 0} size="sm" className="rounded-full bg-gray-700 w-6 h-6 flex items-center justify-center font-medium !text-xs ms-2" />
+            </ListItemSuffix>
+          </ListItem>
+          <ListItem className={`hover:bg-gray-100 rounded-lg ${(location.pathname + '/').startsWith(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE + '/') ? 'bg-gray-100' : ''}`} onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
+            <ListItemPrefix>
+              <FontAwesomeIcon icon={faBookBookmark} className="h-6 w-6" />
+            </ListItemPrefix>
+            <span className="ml-2 font-semibold">
+              Khóa học của tôi
+            </span>
+            <ListItemSuffix>
+              <Chip value={statistic?.countMyCourses || 0} size="sm" className="rounded-full bg-gray-700 w-6 h-6 flex items-center justify-center font-medium !text-xs ms-2" />
+            </ListItemSuffix>
+          </ListItem>
+          <ListItem className={`hover:bg-gray-100 rounded-lg ${(location.pathname + '/').startsWith(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE + '/') ? 'bg-gray-100' : ''}`} onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
+            <ListItemPrefix>
+              <FontAwesomeIcon icon={faGraduationCap} className="h-6 w-6" />
+            </ListItemPrefix>
+            <span className="ml-2 font-semibold">
+              Chứng chỉ của tôi
+            </span>
+            <ListItemSuffix>
+              <Chip value={statistic?.countMyCertificates || 0} size="sm" className="rounded-full bg-gray-700 w-6 h-6 flex items-center justify-center font-medium !text-xs ms-2" />
+            </ListItemSuffix>
+          </ListItem>
+          <ListItem className={`hover:bg-gray-100 rounded-lg ${(location.pathname + '/').startsWith(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE + '/') ? 'bg-gray-100' : ''}`} onClick={() => navigate(PAGE_LOCATION.ADMIN_MANAGEMENT_COURSE)}>
+            <ListItemPrefix>
+              <FontAwesomeIcon icon={faRoute} className="h-6 w-6" />
+            </ListItemPrefix>
+            <span className="ml-2 font-semibold">
+              Lộ trình học của tôi
+            </span>
+            <ListItemSuffix>
+              <Chip value={statistic?.countCourse || 0} size="sm" className="rounded-full bg-gray-700 w-6 h-6 flex items-center justify-center font-medium !text-xs ms-2" />
+            </ListItemSuffix>
+          </ListItem>
+        </>
+        }
       </List>
       <div className="flex flex-col bottom-0 w-full justify-center left-0 right-0">
         <Accordion
@@ -211,12 +236,12 @@ const Sidebar = ({ isOpenSideBar, currentUser }) => {
           {opens.includes(4) && <hr className="mt-2"></hr>}
           <AccordionBody className={`hidden ${opens.includes(4) && 'block'} sm:hidden p-0 pt-1`}>
             <List className="p-0">
-              {hasRole(USER_ROLE.USER) && <> <ListItem className="hover:bg-gray-100 border-y" onClick={() => navigate(PAGE_LOCATION.USER_INFO)}>
-                  <FontAwesomeIcon icon={faCircleInfo} />
-                  <span className="ml-2">
-                    Thông tin cá nhân
-                  </span>
-                </ListItem>
+              {hasRole(USER_ROLE.USER) && <> <ListItem className="hover:bg-gray-100 " onClick={() => navigate(PAGE_LOCATION.USER_INFO)}>
+                <FontAwesomeIcon icon={faCircleInfo} />
+                <span className="ml-2">
+                  Thông tin cá nhân
+                </span>
+              </ListItem>
                 <hr></hr>
               </>}
               <ListItem className="hover:bg-gray-100 ">

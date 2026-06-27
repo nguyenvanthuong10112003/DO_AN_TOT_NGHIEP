@@ -29,7 +29,7 @@ function Header({ toggleSideBar, currentUser }) {
 
   return (
     <div className="w-[100vw] fixed top-0 left-0 right-0 h-16 z-20">
-      <Navbar className="top-0 max-w-full h-full shadow-none px-7 rounded-none">
+      <Navbar className="top-0 max-w-full h-full shadow-none px-7 rounded-none border-color-tertiary">
         <div className="flex items-center justify-between h-full text-gray-700">
           <div className="flex flex-row items-center cursor-default">
             <button type="button" className="mr-6" onClick={toggleSideBar}>
@@ -37,7 +37,7 @@ function Header({ toggleSideBar, currentUser }) {
             </button>
             <Typography
               as="a"
-              href={checkUserWithRoles([USER_ROLE.ADMIN]) ? PAGE_LOCATION.ADMIN : PAGE_LOCATION.HOME}
+              onClick={_ => navigate(checkUserWithRoles([USER_ROLE.ADMIN]) ? PAGE_LOCATION.ADMIN : PAGE_LOCATION.HOME)}
               className="cursor-pointer py-1.5 font-bold text-lg"
             >
               {checkUserWithRoles([USER_ROLE.ADMIN]) ? process.env.REACT_APP_MANAGEMENT_NAME : process.env.REACT_APP_NAME}

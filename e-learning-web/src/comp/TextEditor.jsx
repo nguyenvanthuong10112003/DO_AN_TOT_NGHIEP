@@ -12,9 +12,10 @@ import CharacterCount from "@tiptap/extension-character-count";
 import './style/LessonEditor.css'
 import { buildEditorConfig, excuteIfFunction, isFunction, isString, validatePhoto } from "../helper/utils";
 import { toast } from "react-toastify";
-import { uploadTempPhoto } from "../service/PhotoService";
+import { uploadTempPhoto } from "../service/MediaService";
 import { TEXT_EDITOR_TOOLBAR_BUTTONS } from "../define/define";
-import { CustomTextAlign } from "./LessonEditorComp/CustomTextAlign";
+import { CustomTextAlign } from "./TextEditorComp/CustomTextAlign";
+import { useEffect } from "react";
 
 const TextEditor = ({
   content = "",
@@ -27,19 +28,24 @@ const TextEditor = ({
 }) => {
   const editor = useEditor(buildEditorConfig(groupsBtn, {editable: true, content, placeholder, onChange}));
 
-  const handleInsertImage = (imageFile) => {
+  useEffect(() => {
+    if (!editor) return;
+    if (editor.getHTML() === content) return;
+    editor.commands.setContent(content || '');
+  }, [content])
+
+  const handleInsertImage = async (imageFile) => {
     const error = validatePhoto(imageFile);
     if (isString(error)) {
       toast.error(error)
       return;
     }
 
-    uploadTempPhoto([imageFile])
-      .then(response => {
-        const photoResponse = response?.data?.data?.[0];
-        editor?.chain().focus().setImage({ src: photoResponse.url }).run();
-        pushTempImage?.(photoResponse.id)
-      }).catch(_ => { })
+    const response = await uploadTempPhoto([imageFile]);
+    const photoResponse = response?.data?.data?.[0];
+    if (!photoResponse) return;
+    editor?.chain().focus().setImage({ src: photoResponse.url, imageId: photoResponse.id, imageObj: JSON.stringify(photoResponse) }).run();
+    pushTempImage?.(photoResponse.id)
   }
 
   const wordCount = editor
@@ -101,7 +107,7 @@ const TextEditor = ({
 
       <div className="tiptap-editor px-4 py-2 overflow-y-auto flex-1">
         <EditorContent editor={editor}
-          spellcheck="false"
+          spellCheck="false"
           onMouseDown={(e) => {
             const target = e.target;
 

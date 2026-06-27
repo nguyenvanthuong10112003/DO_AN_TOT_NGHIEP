@@ -75,6 +75,7 @@ const Register = () => {
                             </label>
                             <div className="mt-2">
                                 <input
+                                    value={username || ''}
                                     onChange={(e) => { setUsername(e.target.value); if (!!errors.username) setErrors({ ...errors, username: '' }) }}
                                     id="username"
                                     name="username"
@@ -94,6 +95,7 @@ const Register = () => {
                             </label>
                             <div className="mt-2">
                                 <input
+                                    value={password || ''}
                                     onChange={(e) => {setPassword(e.target.value); if (!!errors.password) setErrors({...errors, password: ''})}} 
                                     id="password"
                                     name="password"
@@ -113,6 +115,7 @@ const Register = () => {
                             </label>
                             <div className="mt-2">
                                 <input
+                                    value={rePassword || ''}
                                     onChange={(e) => {setRePassword(e.target.value); if (!!errors.rePassword) setErrors({...errors, rePassword: ''})}}
                                     id="re-password"
                                     name="re-password"
@@ -153,7 +156,7 @@ const Register = () => {
                     <div className="flex flex-row flex-nowrap items-center justify-center w-full">
                         <div className="flex items-center justify-center dark:bg-gray-800 w-full">
                             <button onClick={() => document.location = getUrlGoogleLogin(process.env.REACT_APP_GOOGLE_REGISTER_REDIRECT_URI)} className="px-4 py-2 border gap-2 border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:shadow transition duration-150 w-full flex items-center justify-center">
-                                <img className="w-6 h-6" src="https://www.svgrepo.com/show/475656/google-color.svg" loading="lazy" alt="google logo" />
+                                <img className="w-6 h-6" src="/img/google-logo.svg" loading="lazy" alt="google logo" />
                                 <span className="font-semibold">Tiếp tục với Google</span>
                             </button>
                         </div>

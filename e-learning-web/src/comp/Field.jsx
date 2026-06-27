@@ -16,8 +16,8 @@ const Field = ({ target, field, editField, tempValue, setTempValue, handleSave, 
                                         type="radio"
                                         name={field.fieldName}
                                         id={`${field.fieldName}-${index}`}
-                                        value={option.value}
-                                        checked={tempValue == option.value}
+                                        value={option.value || ''}
+                                        checked={tempValue === option.value}
                                         onChange={(e) => { setTempValue(e.target.value) }}
                                     />
                                     {option.label}
